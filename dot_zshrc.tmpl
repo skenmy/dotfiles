@@ -97,10 +97,12 @@ bindkey '^[[1;5D' backward-word
 {{- if eq .chezmoi.os "darwin" }}
 
 # ---- macOS: legacy/local toolchains preserved ----
-# NVM (kept for installed node versions; consider migrating to `mise`)
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+# Node/Python/Go/Rust versions are managed by mise (sourced higher up).
+# To migrate from nvm on a box that still has it:
+#   for v in $(ls ~/.nvm/versions/node 2>/dev/null); do mise install node@${v#v}; done
+#   mise use -g node@lts
+#   rm -rf ~/.nvm
+# After that nvm is gone and there's nothing to source here.
 
 # Bun
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
