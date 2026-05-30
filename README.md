@@ -192,6 +192,14 @@ Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. 
 ### Terminal emulator (macOS desktop only)
 - **Ghostty** (`dot_config/ghostty/config`) — JetBrainsMono Nerd Font, TokyoNight theme, cmd-based splits and tabs, shell integration, option-as-alt.
 
+### Terminal quick-wins
+
+- **tealdeer** (`tldr`) — instant offline summaries for any CLI command. Cache refreshes on chezmoi apply.
+- **xh** — curl with sane syntax. `xh POST httpbin.org/post name=paul age:=33` (note `:=` for raw JSON).
+- **mkcert** — generate trusted local TLS certs. Run `mkcert -install` once on a new box to install the local CA.
+- **gh-dash** — terminal dashboard for GitHub PRs/issues/repos. Auto-installed via `gh extension install dlvhdr/gh-dash` on apply once `gh` is authed. Run with `gh dash`.
+- **direnv** (`dot_config/direnv/direnvrc`) — global helpers: `layout mise` (use the project's mise toolchain), `dotenv_if_exists`, `use_flake`, `use_op` (pull 1Password secrets into env).
+
 ### Mesh VPN (personal boxes only)
 - **Tailscale** — installed via the Brewfile cask on macOS and the official `install.sh` on Linux. On Linux, install is gated to `work=false` so employer-managed boxes aren't disturbed. Authenticating is interactive (`sudo tailscale up --operator=$USER` on Linux, menu-bar app on macOS) and only needed once per device.
 

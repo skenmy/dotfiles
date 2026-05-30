@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# extensions list hash: {{ list "dlvhdr/gh-dash" | toString | sha256sum }}
+set -uo pipefail
+
+command -v gh >/dev/null || exit 0
+
+# Only act if the user has authenticated; on a fresh box, gh auth happens
+# later (or via `gh auth login`). The script is run_onchange so it'll be
+# re-tried on subsequent applies.
+gh auth status >/dev/null 2>&1 || { echo "gh not authenticated; skipping extension install"; exit 0; }
+
+want=(dlvhdr/gh-dash)
+
+for ext in "${want[@]}"; do
+    if gh extension list | grep -q "$ext"; then
+        echo "  - $ext: already installed"
+    else
+        echo "  - $ext: installing"
+        gh extension install "$ext" || echo "    !! failed (non-fatal)"
+    fi
+done
