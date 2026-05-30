@@ -6,62 +6,52 @@ One source of truth → applied identically to every MacBook, Windows PC, and Li
 
 ---
 
-## TL;DR
+## TL;DR — what to run on a fresh box
 
-### Fresh box (one command)
+### Every box (macOS / Linux)
 
 ```sh
-# macOS / Linux — full bootstrap: chezmoi, packages, bw unlock, GPG + SSH + atuin from Bitwarden
 curl -fsSL https://raw.githubusercontent.com/skenmy/dotfiles/main/scripts/bootstrap.sh | bash
 ```
 
-```powershell
-# Windows — chezmoi only (no Bitwarden integration yet)
-iex "&{$(irm 'https://get.chezmoi.io/ps1')} -b $HOME/.local/bin init --apply skenmy"
-```
+Pulls dotfiles, installs packages, unlocks Bitwarden, restores GPG + SSH + atuin. Re-runnable; every step is a no-op if already done.
 
-### Day-to-day
+### Every Linux **server** (extra one-liner)
 
 ```sh
-chezmoi edit ~/.zshrc                                  # open the source template
-chezmoi diff                                           # preview pending changes
-chezmoi apply                                          # apply to $HOME
-cd "$(chezmoi source-path)" && git add -A \
-    && git commit -m "tweak zshrc" && git push         # roll out to all boxes (auto-update timer picks it up)
-chezmoi update                                         # manual pull + apply (don't wait for the timer)
-```
-
-### Add a brand-new file to dotfiles
-
-```sh
-chezmoi add ~/.config/foo/bar.conf                     # static
-chezmoi add --template ~/.config/foo/bar.conf          # template (edit to add {{ . }})
-cd "$(chezmoi source-path)" && git add -A \
-    && git commit -m "add foo config" && git push
-```
-
-### One-time setup
-
-```sh
-# Seed Bitwarden with atuin / GPG / SSH secrets (run on the machine that has them all)
-~/.local/share/chezmoi/scripts/seed-bitwarden.sh
-
-# macOS: store the bw master pw in Keychain so Touch ID unlocks the vault
-security add-generic-password -T '' -s bw-master -a "$USER" -w
-
-# Linux server: let the daily auto-update timer fire without a logged-in session
 sudo loginctl enable-linger "$USER"
 ```
 
-### Troubleshooting
+Without this, the user-level systemd timer (which runs `chezmoi update` daily) won't fire when you're logged out. Skip on Linux *desktops* you stay logged into.
+
+### Every Windows box
+
+```powershell
+iex "&{$(irm 'https://get.chezmoi.io/ps1')} -b $HOME/.local/bin init --apply skenmy"
+```
+
+Note: no Bitwarden integration on Windows yet — GPG / SSH / atuin still need importing by hand.
+
+**That's it for every-box setup.** Everything below is one-time-ever or optional.
+
+---
+
+## Optional / one-time-ever
+
+### Once, on the machine that has all your secrets locally
 
 ```sh
-chezmoi data                              # show resolved template variables
-chezmoi managed                           # list every file chezmoi controls
-chezmoi unmanaged                         # files in $HOME not under chezmoi
-chezmoi status                            # like `git status` for the apply state
-tail ~/.local/state/chezmoi-update/last.log   # see what the daily timer did
-~/.local/bin/chezmoi-update-and-notify    # fire the timer immediately
+# Push atuin key, GPG private key, SSH private key into Bitwarden so bootstrap.sh can pull them on new boxes.
+~/.local/share/chezmoi/scripts/seed-bitwarden.sh
+```
+
+Only needs to happen the very first time, or whenever you rotate a secret. Existing boxes don't need this.
+
+### Optional UX, macOS only
+
+```sh
+# Use Touch ID instead of typing the Bitwarden master password during bootstrap.
+security add-generic-password -T '' -s bw-master -a "$USER" -w
 ```
 
 ---
