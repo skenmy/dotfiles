@@ -29,6 +29,7 @@ brew "atuin"
 brew "tealdeer"       # fast `tldr` pages — "how do I tar this again?"
 brew "xh"             # friendlier curl: `xh POST api.example.com name=paul`
 brew "mkcert"         # trusted local TLS for https://localhost
+brew "pre-commit"     # framework for git pre-commit hooks (see ~/.config/pre-commit/)
 
 # Tooling already in use — preserved
 brew "gnupg"
