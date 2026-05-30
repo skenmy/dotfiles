@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# Pull latest dotfiles from github.com/skenmy/dotfiles and apply.
+#
+# Invoked by launchd (macOS) or systemd user timer (Linux). Logs go
+# under ~/.local/state/chezmoi-update/. Always exits 0 — a flaky
+# network shouldn't break the timer's bookkeeping.
+
+set -uo pipefail
+
+LOGDIR="${XDG_STATE_HOME:-$HOME/.local/state}/chezmoi-update"
+LOG="$LOGDIR/last.log"
+mkdir -p "$LOGDIR"
+
+ts() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
+say() { printf "[%s] %s\n" "$(ts)" "$*" | tee -a "$LOG"; }
+
+HOST="$(hostname -s 2>/dev/null || hostname)"
+
+# Make sure chezmoi is on PATH (launchd has a minimal PATH).
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+command -v chezmoi >/dev/null || { say "chezmoi not on PATH; aborting"; exit 0; }
+
+say "starting chezmoi update on $HOST"
+
+SOURCE_DIR="$(chezmoi source-path 2>/dev/null || echo "$HOME/.local/share/chezmoi")"
+BEFORE_SHA="$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
+
+chezmoi update --force >>"$LOG" 2>&1
+rc=$?
+
+AFTER_SHA="$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
+
+if [ "$rc" -ne 0 ]; then
+    say "chezmoi update exited $rc — see $LOG"
+elif [ "$BEFORE_SHA" = "$AFTER_SHA" ]; then
+    say "no changes (HEAD=$BEFORE_SHA)"
+else
+    short() { printf '%s' "$1" | cut -c1-7; }
+    say "updated: $(short "$BEFORE_SHA") -> $(short "$AFTER_SHA")"
+    git -C "$SOURCE_DIR" log --pretty=format:'  %h %s' "$BEFORE_SHA..$AFTER_SHA" 2>/dev/null | tee -a "$LOG"
+    echo >>"$LOG"
+fi
+
+exit 0

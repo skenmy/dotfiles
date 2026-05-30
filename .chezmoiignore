@@ -2,9 +2,11 @@
 {{- if ne .chezmoi.os "darwin" }}
 Brewfile
 .config/ghostty
+Library
 run_once_install-packages-darwin.sh
 {{- end }}
 {{- if ne .chezmoi.os "linux" }}
+.config/systemd
 run_once_install-packages-linux.sh
 {{- end }}
 {{- if ne .chezmoi.os "windows" }}

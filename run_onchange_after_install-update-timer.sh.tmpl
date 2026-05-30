@@ -1,0 +1,31 @@
+{{- /* Re-runs whenever the script content or any of the unit files change. */ -}}
+#!/usr/bin/env bash
+# unit hash: {{ include "Library/LaunchAgents/com.skenmy.chezmoi-update.plist.tmpl" | sha256sum }}
+# unit hash: {{ include "dot_config/systemd/user/chezmoi-update.service.tmpl" | sha256sum }}
+# unit hash: {{ include "dot_config/systemd/user/chezmoi-update.timer.tmpl" | sha256sum }}
+# script hash: {{ include "dot_local/private_bin/executable_chezmoi-update-and-notify" | sha256sum }}
+set -uo pipefail
+
+{{- if eq .chezmoi.os "darwin" }}
+PLIST="$HOME/Library/LaunchAgents/com.skenmy.chezmoi-update.plist"
+if [ -f "$PLIST" ]; then
+    echo "==> (re)loading $PLIST"
+    launchctl unload "$PLIST" 2>/dev/null || true
+    launchctl load "$PLIST"
+    echo "    next run: $(launchctl list com.skenmy.chezmoi-update 2>/dev/null | grep -E '^\s*"Label"|StartCalendarInterval' || true)"
+fi
+{{- end }}
+
+{{- if eq .chezmoi.os "linux" }}
+if command -v systemctl >/dev/null 2>&1; then
+    if systemctl --user show-environment >/dev/null 2>&1; then
+        echo "==> enabling chezmoi-update.timer (user)"
+        systemctl --user daemon-reload
+        systemctl --user enable --now chezmoi-update.timer
+        systemctl --user list-timers chezmoi-update.timer --no-pager 2>/dev/null | head -3
+    else
+        echo "!! user systemd not available (probably running as a daemon or container)."
+        echo "   To enable on a real session: loginctl enable-linger \"$USER\" then re-run."
+    fi
+fi
+{{- end }}

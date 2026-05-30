@@ -1,0 +1,13 @@
+{{- if eq .chezmoi.os "linux" -}}
+[Unit]
+Description=Pull latest skenmy/dotfiles and apply
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/chezmoi-update-and-notify
+# Don't let a transient git/network blip fail the unit (the script logs
+# its own errors and exits 0 on purpose).
+SuccessExitStatus=0
+{{- end }}

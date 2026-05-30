@@ -53,6 +53,16 @@ security add-generic-password -T '' -s bw-master -a "$USER" -w
 
 You'll be prompted for the Bitwarden master password once. After that, `bootstrap.sh` will unlock the vault via Keychain (Touch ID gates the Keychain read) instead of prompting.
 
+### Auto-updates
+
+Every box runs `chezmoi update` daily at 03:17 local — pulls from `main` and applies.
+
+- **macOS:** `~/Library/LaunchAgents/com.skenmy.chezmoi-update.plist` (loaded by launchd at apply time).
+- **Linux:** `~/.config/systemd/user/chezmoi-update.{service,timer}` (enabled via `systemctl --user enable --now chezmoi-update.timer`). On servers, run `loginctl enable-linger "$USER"` first so the user timer fires without an active login session.
+- **Worker:** `~/.local/bin/chezmoi-update-and-notify` — wraps `chezmoi update` and logs to `~/.local/state/chezmoi-update/last.log`.
+
+Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. Inspect `last.log` to see whether a change rolled out.
+
 ### Post-bootstrap
 
 - Open a new shell (so starship/mise/atuin/zsh load).
