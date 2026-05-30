@@ -10,6 +10,7 @@
 #   atuin/skenmy.com   — Login item.   username=skenmy, password=<atuin pw>, custom field `key`=<atuin encryption key>.
 #   gpg/<KEY_ID>       — Secure Note.  notes=<armored private key>, custom field `trust`=<ownertrust>.
 #   ssh/personal/<NAME>— Secure Note.  notes=<private key>, custom field `public`=<.pub contents>.
+#   restic/personal    — Secure Note.  notes=<contents of ~/.config/restic/env>.
 #
 # Re-running is safe: existing items are updated in place.
 
@@ -21,6 +22,8 @@ ATUIN_USER="${ATUIN_USER:-skenmy}"
 ATUIN_ITEM="atuin/skenmy.com"
 GPG_ITEM="gpg/$GPG_KEY_ID"
 SSH_ITEM="ssh/personal/$SSH_KEY_NAME"
+RESTIC_ITEM="restic/personal"
+RESTIC_ENV_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/restic/env"
 
 c_blue=$'\033[1;34m' c_reset=$'\033[0m'
 log() { printf "%s==>%s %s\n" "$c_blue" "$c_reset" "$*"; }
@@ -148,9 +151,52 @@ seed_ssh() {
     upsert "$SSH_ITEM" "$body"
 }
 
+# ---------------------------------------------------------------------------
+# Restic — env file at ~/.config/restic/env. If absent, prompt for the
+# basics and write one before pushing.
+# ---------------------------------------------------------------------------
+seed_restic() {
+    if [ ! -f "$RESTIC_ENV_FILE" ]; then
+        log "no $RESTIC_ENV_FILE yet — let's create one"
+        mkdir -p "$(dirname "$RESTIC_ENV_FILE")"
+        local repo password b2_id b2_key
+        printf "Restic repository URL (e.g. b2:my-bucket:laptop): "; read -r repo
+        printf "Restic password (won't echo): "; stty -echo; read -r password; stty echo; echo
+        printf "B2 account ID (or blank if using a different backend): "; read -r b2_id
+        if [ -n "$b2_id" ]; then
+            printf "B2 account key (won't echo): "; stty -echo; read -r b2_key; stty echo; echo
+        fi
+        {
+            printf 'RESTIC_REPOSITORY=%s\n' "$repo"
+            printf 'RESTIC_PASSWORD=%s\n'   "$password"
+            [ -n "$b2_id" ] && printf 'B2_ACCOUNT_ID=%s\nB2_ACCOUNT_KEY=%s\n' "$b2_id" "$b2_key"
+        } > "$RESTIC_ENV_FILE"
+        chmod 0600 "$RESTIC_ENV_FILE"
+        log "wrote $RESTIC_ENV_FILE (0600)"
+    fi
+
+    local body env_contents
+    env_contents="$(cat "$RESTIC_ENV_FILE")"
+    body="$(jq -n \
+        --arg name "$RESTIC_ITEM" \
+        --arg notes "$env_contents" \
+        '{
+            organizationId: null,
+            folderId: null,
+            type: 2,
+            name: $name,
+            secureNote: { type: 0 },
+            notes: $notes,
+            fields: [],
+            login: null
+        }')"
+    upsert "$RESTIC_ITEM" "$body"
+}
+
 seed_atuin
 seed_gpg
 seed_ssh
+seed_restic
 
 bw sync --session "$BW_SESSION" >/dev/null
 log "Done. Verify in Bitwarden: $ATUIN_ITEM, $GPG_ITEM, $SSH_ITEM"
