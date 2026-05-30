@@ -40,9 +40,6 @@ command -v starship >/dev/null && eval "$(starship init zsh)"
 # ---- Tooling: mise (runtime versions) ----
 command -v mise >/dev/null && eval "$(mise activate zsh)"
 
-# ---- Tooling: zoxide (smart cd) ----
-command -v zoxide >/dev/null && eval "$(zoxide init zsh --cmd cd)"
-
 # ---- Tooling: fzf (fuzzy finder) ----
 if command -v fzf >/dev/null; then
     source <(fzf --zsh) 2>/dev/null || true
@@ -125,6 +122,9 @@ command -v flux >/dev/null && . <(flux completion zsh)
 # iTerm2 shell integration (works in Ghostty too)
 test -e "$HOME/.iterm2_shell_integration.zsh" && source "$HOME/.iterm2_shell_integration.zsh"
 {{- end }}
+
+# ---- zoxide (must be last — needs the final PATH) ----
+command -v zoxide >/dev/null && eval "$(zoxide init zsh --cmd cd)"
 
 # ---- Local overrides (gitignored) ----
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"

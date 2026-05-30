@@ -12,7 +12,23 @@ Host *
     ControlPersist 10m
 {{- if eq .chezmoi.os "darwin" }}
     UseKeychain yes
+{{- if .work }}
+    # Work machine — use the 1Password SSH agent.
     IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+{{- else }}
+    # Personal machine — use the Bitwarden Desktop SSH agent.
+    # Enable it in Bitwarden Desktop → Settings → SSH Agent.
+    IdentityAgent "~/.bitwarden-ssh-agent.sock"
+{{- end }}
+{{- end }}
+{{- if eq .chezmoi.os "linux" }}
+{{- if .work }}
+    # Work Linux box — 1Password CLI agent socket.
+    IdentityAgent "~/.1password/agent.sock"
+{{- else }}
+    # Personal Linux box — Bitwarden Desktop SSH agent socket.
+    IdentityAgent "~/.bitwarden-ssh-agent.sock"
+{{- end }}
 {{- end }}
 
 # GitHub
