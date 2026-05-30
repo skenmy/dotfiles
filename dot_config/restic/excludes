@@ -28,7 +28,7 @@ dist
 .ruff_cache
 .tox
 
-# Cloud / drive sync
+# Cloud / drive sync — the *cloud* is the canonical copy; local is just cache.
 Library/CloudStorage
 Library/Mobile Documents
 Dropbox
@@ -38,7 +38,7 @@ Google Drive
 .DS_Store
 .Trash
 Library/Logs
-Library/Mail/V*/MailData/Envelope*
+Library/Mail
 *.tmp
 
 # Big stuff usually re-downloadable
@@ -46,4 +46,67 @@ Downloads
 Movies
 Music
 
-# Anything matching `CACHEDIR.TAG` is auto-skipped via --exclude-caches in the script.
+# ── iCloud-backed Apple apps ───────────────────────────────────────
+# iCloud Photos: if it's on, iCloud has the originals (verify in
+# System Settings → Apple ID → iCloud → Photos). Comment back in if
+# you ever turn iCloud Photos off.
+Pictures/Photos Library.photoslibrary
+# Apple Notes: in CloudKit if iCloud Notes is on. Re-include if not.
+Library/Group Containers/group.com.apple.notes
+Library/Containers/com.apple.Notes
+# iMessage: in iCloud if "Messages in iCloud" is enabled. Comment back
+# in if not — local SQLite is the only copy then.
+Library/Messages
+
+# ── Dev caches (regeneratable on demand) ──────────────────────────
+.gradle
+.m2
+.npm
+.cargo/registry
+.cargo/git
+.cocoapods
+.bun/install
+.android
+.ollama/models
+Library/Developer/Xcode/DerivedData
+Library/Developer/Xcode/iOS DeviceSupport
+Library/Developer/Xcode/watchOS DeviceSupport
+Library/Developer/Xcode/tvOS DeviceSupport
+Library/Developer/CoreSimulator
+
+# ── Heavy app data that's redundant or regeneratable ──────────────
+# iPhone/iPad backups — usually duplicated by iCloud.
+Library/Application Support/MobileSync/Backup
+# Steam game installs — re-download from Steam.
+Library/Application Support/Steam
+# Spotify local song cache.
+Library/Application Support/Spotify/PersistentCache
+# VS Code workspace caches (regeneratable). User/settings.json is NOT excluded.
+Library/Application Support/Code/Code Cache
+Library/Application Support/Code/GPUCache
+Library/Application Support/Code/User/workspaceStorage
+Library/Application Support/Code/User/History
+# Cursor (the AI fork) mirrors VS Code layout.
+Library/Application Support/Cursor/CachedData
+Library/Application Support/Cursor/Code Cache
+Library/Application Support/Cursor/GPUCache
+Library/Application Support/Cursor/Service Worker
+Library/Application Support/Cursor/User/workspaceStorage
+Library/Application Support/Cursor/User/History
+
+# ── Things you probably DO want to keep (NOT excluded) ───────────
+# ~/Documents       — irreplaceable user data
+# ~/Desktop         — active workspace
+# ~/code            — projects (git remotes don't capture uncommitted work)
+# ~/.ssh            — known_hosts + agent socket configs
+# ~/.gnupg          — keyring + trust DB
+# ~/.config         — chezmoi-managed configs (small)
+# ~/.local/share/atuin/key — atuin encryption key
+
+# ── Opt-in: uncomment if these don't matter on this box ──────────
+# Parallels — VM disk images, often 100GB+. UNIQUE state lives inside;
+# only exclude if you can re-build the VM from scratch.
+# Parallels
+# Library/Group Containers/4C6364ACXT.com.parallels.desktop.appstore
+
+# Anything matching `CACHEDIR.TAG` is auto-skipped via --exclude-caches.
