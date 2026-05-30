@@ -131,9 +131,11 @@ command -v zoxide >/dev/null && eval "$(zoxide init zsh --cmd cd)"
 # ---- Random tip on every new interactive shell ----
 # Pick a random non-comment, non-blank line from ~/.config/dotfiles/tips.
 # Suppress with `export DOTFILES_NO_TIP=1` in ~/.zshrc.local.
-if [[ -o interactive ]] && [[ -z "${DOTFILES_NO_TIP:-}" ]] && [[ -f "$HOME/.config/dotfiles/tips" ]]; then
-    _tip="$(awk 'BEGIN{srand()} /^[^#]/ && NF {a[++n]=$0} END{if(n)print a[int(rand()*n)+1]}' "$HOME/.config/dotfiles/tips")"
-    [[ -n "$_tip" ]] && print -P "%F{yellow}💡%f %B$_tip%b"
+# Uses printf (not `print -P`) so any % / unclosed-backtick / curly-brace in
+# a tip can't be re-interpreted as zsh prompt expansion.
+if [[ -o interactive ]] && [[ -z "${DOTFILES_NO_TIP:-}" ]] && [[ -r "$HOME/.config/dotfiles/tips" ]]; then
+    _tip="$(awk 'BEGIN{srand()} /^[^#]/ && NF {a[++n]=$0} END{if(n)print a[int(rand()*n)+1]}' "$HOME/.config/dotfiles/tips" 2>/dev/null)"
+    [[ -n "$_tip" ]] && printf '\e[33m💡\e[0m \e[1m%s\e[0m\n' "$_tip"
     unset _tip
 fi
 

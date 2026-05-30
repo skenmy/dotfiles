@@ -4,7 +4,7 @@
 
 # ── core CLI ───────────────────────────────────────────────────────
 tldr <cmd> — instant offline cheat-sheet for any command. Try `tldr tar`.
-xh GET httpbin.org/headers — friendlier curl. `:= for raw JSON, == for query params.
+xh GET httpbin.org/headers — friendlier curl. Use ":=" for raw JSON, "==" for query params.
 cd foo — zoxide aliased to `cd`; type a frecent fragment, no full path needed.
 zi — zoxide interactive: fuzzy-pick from your visited dirs.
 bat <file> — cat with syntax highlighting + git markers. Set `--paging=never` for piping.
