@@ -25,6 +25,8 @@ GITHUB_USER="${GITHUB_USER:-skenmy}"
 ATUIN_ITEM="${ATUIN_ITEM:-atuin/skenmy.com}"
 GPG_ITEM="${GPG_ITEM:-gpg/9BFD73704EA02674}"
 SSH_ITEM="${SSH_ITEM:-ssh/personal/id_ed25519}"
+RESTIC_ITEM="${RESTIC_ITEM:-restic/personal}"
+RESTIC_ENV_FILE="${RESTIC_ENV_FILE:-$HOME/.config/restic/env}"
 ATUIN_SERVER="${ATUIN_SERVER:-https://atuin.skenmy.com}"
 KEYCHAIN_ENTRY="${KEYCHAIN_ENTRY:-bw-master}"
 
@@ -157,6 +159,19 @@ stage_atuin_secret() {
     ok "atuin credentials staged"
 }
 
+install_restic_env() {
+    log "Fetching restic env from ${RESTIC_ITEM}…"
+    local notes
+    if ! notes="$(bw_notes "$RESTIC_ITEM" 2>/dev/null)" || [ -z "$notes" ] || [ "$notes" = "null" ]; then
+        warn "${RESTIC_ITEM} not found in vault — skipping. Run scripts/seed-bitwarden.sh from a primed box to create it."
+        return
+    fi
+    mkdir -p "$(dirname "$RESTIC_ENV_FILE")"
+    printf '%s\n' "$notes" > "$RESTIC_ENV_FILE"
+    chmod 0600 "$RESTIC_ENV_FILE"
+    ok "wrote $RESTIC_ENV_FILE (0600)"
+}
+
 # ---------------------------------------------------------------------------
 # step 5: chezmoi apply
 # ---------------------------------------------------------------------------
@@ -214,6 +229,7 @@ main() {
     import_gpg
     install_ssh
     stage_atuin_secret
+    install_restic_env
     run_chezmoi
     finish_atuin
 
