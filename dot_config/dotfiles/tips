@@ -1,0 +1,80 @@
+# Tips shown one-at-a-time on each new interactive shell.
+# One tip per line; lines starting with # are ignored, as are blank lines.
+# Edit freely — just push and it propagates to every box overnight.
+
+# ── core CLI ───────────────────────────────────────────────────────
+tldr <cmd> — instant offline cheat-sheet for any command. Try `tldr tar`.
+xh GET httpbin.org/headers — friendlier curl. `:= for raw JSON, == for query params.
+cd foo — zoxide aliased to `cd`; type a frecent fragment, no full path needed.
+zi — zoxide interactive: fuzzy-pick from your visited dirs.
+bat <file> — cat with syntax highlighting + git markers. Set `--paging=never` for piping.
+eza -lah --git --icons — better ls; `l` and `ll` are pre-aliased.
+fd <pattern> — sane `find`. Respects .gitignore by default.
+rg <pattern> — ripgrep; faster than grep, ignores .git, respects .gitignore.
+fzf — Ctrl+T to pick a file, Ctrl+R for history (via atuin), Alt+C to fuzzy-cd.
+jq '.foo.bar' — JSON filter/pretty-print. `jq -r` for raw output.
+yq '.foo.bar' — same as jq, for YAML/TOML.
+btop — modern htop. Press `h` once for the keybind cheat-sheet.
+mkcd foo — mkdir + cd in one go (zsh function).
+serve — alias for `python3 -m http.server`; quick HTTP server in cwd.
+myip — alias for `curl -s ifconfig.me`.
+dco — alias for `docker compose`. `dps` for a pretty docker ps.
+
+# ── git ────────────────────────────────────────────────────────────
+gs — git status. gd — diff. gp — push. gl — pull. gco — checkout. gcm — commit -m.
+glog — git log --oneline --graph --decorate --all. The "where am I" command.
+lazygit (or `lzg`) — TUI for git. Easier than memorising flags for any non-trivial rebase.
+delta — already wired in as your git pager; use `git diff` and it's prettier than diff-so-fancy.
+git wip — alias: `git add -A && git commit -m wip --no-verify`. Useful before a risky pull.
+git pushf — alias for `push --force-with-lease`. Safer than `--force`.
+git sync — alias: `pull --rebase && push`. The "catch me up" command.
+gh pr create --fill — opens a PR using the last commit message as title+body.
+gh pr checkout 123 — fetches a PR and checks it out as a local branch.
+gh dash — TUI dashboard for every PR / issue / repo on your account.
+
+# ── dotfiles / chezmoi ─────────────────────────────────────────────
+chezmoi update — pull main + apply. Otherwise the 03:17 timer does it nightly.
+chezmoi edit ~/.zshrc — edit the source template, not the live file.
+chezmoi diff — preview what would change before applying.
+chezmoi managed — list every file chezmoi controls. `unmanaged` for the inverse.
+chezmoi data — show resolved template variables (os, hostname, prompts).
+~/.local/bin/dotfiles-brew-sync — push your local brew installs into the Brewfile now (else 02:00 nightly).
+
+# ── runtimes / env ─────────────────────────────────────────────────
+mise use -g node@lts — install + set the global default for any tool.
+mise use node@20.11 — set a project-local pin (writes .mise.toml in cwd).
+mise install — install everything pinned in .mise.toml.
+direnv allow — trust a .envrc in this dir; auto-loads on cd. `layout mise` uses the local toolchain.
+mkcert <host> — generate trusted local TLS certs. `mkcert -install` once per box first.
+pre-commit install — wires the `.pre-commit-config.yaml` to .git/hooks/pre-commit.
+
+# ── kubernetes / infra ─────────────────────────────────────────────
+k9s — TUI for kubectl. `:` to command, `/` to filter, `?` for keybinds.
+k — alias for kubectl. `tf` for terraform.
+flux get all — top-level "what's flux reconciling" view.
+
+# ── tmux ───────────────────────────────────────────────────────────
+tmux: prefix is C-a. `|` splits right, `-` splits down. `h/j/k/l` to navigate.
+tmux: prefix + r reloads ~/.tmux.conf. prefix + [ enters copy mode (vi keys).
+tmux: tmux-resurrect saves session on Ctrl+a Ctrl+s, restores on Ctrl+a Ctrl+r.
+
+# ── nvim ───────────────────────────────────────────────────────────
+nvim: leader is Space. <leader>ff find files, <leader>fg live grep, <leader>fb buffers.
+nvim: <leader>e toggles file tree. <leader>gg opens lazygit inside nvim.
+nvim: K shows LSP hover docs. gd jumps to definition. <leader>rn renames symbol.
+
+# ── ghostty ────────────────────────────────────────────────────────
+ghostty: cmd+enter toggles fullscreen. cmd+d / cmd+shift+d split. cmd+h/j/k/l nav.
+ghostty +list-keybinds — show every active binding (defaults + customs).
+ghostty +list-themes — preview every bundled theme. Yours is "Catppuccin Mocha".
+
+# ── atuin / shell history ─────────────────────────────────────────
+atuin — Ctrl+R for fuzzy history search synced across every box.
+atuin stats — interesting summary of your shell usage (most-run, busiest day, etc.).
+atuin key — print the encryption key for backup. Lose it, lose access to synced history.
+
+# ── restic / backup ───────────────────────────────────────────────
+restic snapshots — list every backup snapshot in your repo. `--host=$(hostname)` for just this box.
+restic stats latest — size of the latest snapshot.
+restic restore latest --target /tmp/restore — pull files back from the latest backup.
+~/.local/bin/restic-backup — run a backup right now (else 04:32 nightly).
