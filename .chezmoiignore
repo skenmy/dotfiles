@@ -27,5 +27,6 @@ run_once_install-packages-windows.ps1
 {{- end }}
 
 README.md
+CLAUDE.md
 gpg-public-key.asc
 scripts
