@@ -1,0 +1,16 @@
+{{- if eq .chezmoi.os "linux" -}}
+[Unit]
+Description=Daily chezmoi update + notify
+Requires=chezmoi-update.service
+
+[Timer]
+# 03:17 local, plus up to 30 min of jitter so 50 servers don't all hit
+# GitHub at the same second.
+OnCalendar=*-*-* 03:17:00
+RandomizedDelaySec=30min
+Persistent=true
+Unit=chezmoi-update.service
+
+[Install]
+WantedBy=timers.target
+{{- end }}

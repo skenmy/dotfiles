@@ -53,6 +53,24 @@ security add-generic-password -T '' -s bw-master -a "$USER" -w
 
 You'll be prompted for the Bitwarden master password once. After that, `bootstrap.sh` will unlock the vault via Keychain (Touch ID gates the Keychain read) instead of prompting.
 
+### Auto-updates
+
+Every box runs `chezmoi update` daily at 03:17 local — pulls from `main`, applies, and (optionally) posts a push notification to your ntfy server when something actually changed.
+
+- **macOS:** `~/Library/LaunchAgents/com.skenmy.chezmoi-update.plist` (loaded by launchd at apply time).
+- **Linux:** `~/.config/systemd/user/chezmoi-update.{service,timer}` (enabled via `systemctl --user enable --now chezmoi-update.timer`). On servers, run `loginctl enable-linger "$USER"` first so the user timer fires without an active login session.
+- **Worker:** `~/.local/bin/chezmoi-update-and-notify` — wraps `chezmoi update` and POSTs to ntfy on actual changes.
+
+To get notifications, drop an env file at `~/.config/chezmoi-update/env`:
+
+```sh
+NTFY_URL=https://notify.ts.skenmy.com/dotfiles
+NTFY_TOKEN=tk_xxx     # optional; Bearer auth for private topics
+NTFY_PRIORITY=3       # 1=min, 3=default, 5=urgent
+```
+
+Logs land in `~/.local/state/chezmoi-update/`. Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to test.
+
 ### Post-bootstrap
 
 - Open a new shell (so starship/mise/atuin/zsh load).
