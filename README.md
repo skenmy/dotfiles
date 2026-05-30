@@ -123,6 +123,10 @@ If you `brew install <foo>` on one Mac, you don't want to remember to PR it into
 - Per-machine exceptions: `~/.config/dotfiles/brew-sync-ignore` — one extended-regex per line, matched against Brewfile lines. Add `^cask "firefox"$` to keep Firefox on this Mac only.
 - Logs at `~/.local/state/dotfiles-brew-sync/last.log`. Run the script ad-hoc to force a sync.
 
+### Shell tips on every new terminal
+
+Every new interactive zsh prints one tip from `~/.config/dotfiles/tips` — a curated reminder list for the tools in your $PATH (`tldr <cmd>`, `gh dash`, `mise use -g node@lts`, neovim leader keys, tmux prefix bindings, restic recovery commands, etc.). Add new tips one-per-line; lines starting with `#` are ignored. Silence on a specific machine with `export DOTFILES_NO_TIP=1` in `~/.zshrc.local`.
+
 ### Auto-updates
 
 Every box runs `chezmoi update` daily at 03:17 local — pulls from `main` and applies.
