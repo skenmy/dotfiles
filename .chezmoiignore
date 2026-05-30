@@ -25,3 +25,4 @@ run_once_install-packages-windows.ps1
 
 README.md
 gpg-public-key.asc
+scripts
