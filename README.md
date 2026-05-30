@@ -203,6 +203,16 @@ Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. 
 ### Mesh VPN (personal boxes only)
 - **Tailscale** — installed via the Brewfile cask on macOS and the official `install.sh` on Linux. On Linux, install is gated to `work=false` so employer-managed boxes aren't disturbed. Authenticating is interactive (`sudo tailscale up --operator=$USER` on Linux, menu-bar app on macOS) and only needed once per device.
 
+### Pre-commit framework
+- **pre-commit** is in the Brewfile; `dot_config/pre-commit/skenmy-defaults.yaml` ships a starter `.pre-commit-config.yaml` you can copy into any project. The defaults cover the language-agnostic safety net: trailing whitespace, EOL normalisation, JSON/YAML/TOML validation, large-file guard, **gitleaks** to block accidental secret commits, **codespell** for typos.
+- Enable in a new repo:
+  ```sh
+  cp ~/.config/pre-commit/skenmy-defaults.yaml .pre-commit-config.yaml
+  pre-commit install
+  git add .pre-commit-config.yaml && git commit -m "Add pre-commit"
+  ```
+- Add language-specific hooks (ruff / eslint / gofumpt / etc.) per-repo *below* the defaults — they're project state, not user state, so they don't belong in this dotfile.
+
 ### Git
 - **`dot_gitconfig.tmpl`** — name/email/signingKey from chezmoi prompts. GPG sign commits and tags. **delta** as pager and interactive diff filter. `init.defaultBranch=main`, `pull.rebase=false`, `push.default=current` with `autoSetupRemote`, `fetch.prune`, `rebase.autoStash`+`autoSquash`, `rerere.enabled`, branches sorted by recent commit, `merge.conflictstyle=zdiff3`, `diff.algorithm=histogram`, `help.autocorrect=prompt`.
 - URL aliases: `gh:user/repo` → `git@github.com:user/repo`.
