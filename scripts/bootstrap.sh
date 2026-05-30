@@ -124,7 +124,7 @@ bw_pw()    { bw get password "$1" --session "$BW_SESSION"; }
 bw_notes() { bw get item "$1" --session "$BW_SESSION" | jq -r .notes; }
 
 import_gpg() {
-    log "Importing GPG private key from $GPG_ITEM…"
+    log "Importing GPG private key from ${GPG_ITEM}…"
     local key trust
     key="$(bw_notes "$GPG_ITEM")" || { warn "GPG item missing; skipping"; return; }
     trust="$(bw_field "$GPG_ITEM" trust || true)"
@@ -134,7 +134,7 @@ import_gpg() {
 }
 
 install_ssh() {
-    log "Installing SSH private key from $SSH_ITEM…"
+    log "Installing SSH private key from ${SSH_ITEM}…"
     local name key pub
     name="${SSH_ITEM##*/}"
     key="$(bw_notes "$SSH_ITEM")" || { warn "SSH item missing; skipping"; return; }
@@ -150,7 +150,7 @@ stage_atuin_secret() {
     # Atuin needs to be installed first (chezmoi will install it via brew/apt),
     # so we just stash the password + key in env vars and apply them after
     # chezmoi has run.
-    log "Fetching atuin credentials from $ATUIN_ITEM…"
+    log "Fetching atuin credentials from ${ATUIN_ITEM}…"
     ATUIN_PW="$(bw_pw "$ATUIN_ITEM")"  || die "atuin password not in vault"
     ATUIN_KEY="$(bw_field "$ATUIN_ITEM" key)" || die "atuin key not in vault"
     [ -n "$ATUIN_PW" ] && [ -n "$ATUIN_KEY" ] || die "atuin creds missing from vault"
@@ -195,7 +195,7 @@ finish_atuin() {
 
     log "Importing local shell history (idempotent)…"
     atuin import auto 2>&1 | sed 's/^/    /' || true
-    log "Syncing with $ATUIN_SERVER…"
+    log "Syncing with ${ATUIN_SERVER}…"
     atuin sync -f 2>&1 | sed 's/^/    /'
     ok "atuin synced"
 }

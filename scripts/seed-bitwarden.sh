@@ -94,7 +94,7 @@ seed_atuin() {
 # GPG
 # ---------------------------------------------------------------------------
 seed_gpg() {
-    log "Exporting GPG private key $GPG_KEY_ID…"
+    log "Exporting GPG private key ${GPG_KEY_ID}…"
     local priv trust
     priv="$(gpg --armor --export-secret-keys "$GPG_KEY_ID")" || die "GPG export failed (need passphrase via agent)"
     trust="$(gpg --export-ownertrust 2>/dev/null | grep "^$(echo "$GPG_KEY_ID" | tr 'a-z' 'A-Z')" || true)"
