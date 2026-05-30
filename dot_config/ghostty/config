@@ -10,10 +10,9 @@ font-size = 14
 font-thicken = true
 
 # ── Theme ─────────────────────────────────────────────────────────
-# Pairs with the starship Tokyo Night-ish palette and neovim's tokyonight colorscheme.
-theme = "TokyoNight"
-# Slight transparency for a less heavy look. Drop to 1.0 if it bothers you.
-background-opacity = 0.96
+# Catppuccin Mocha — the darkest of the four Catppuccin flavours.
+theme = "catppuccin-mocha"
+background-opacity = 1.0
 
 # ── Window ────────────────────────────────────────────────────────
 window-padding-x = 10
