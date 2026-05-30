@@ -1,0 +1,42 @@
+{{- if eq .chezmoi.os "windows" -}}
+# Install power-user CLI tools on Windows via winget
+
+$ErrorActionPreference = "Stop"
+
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Host "winget not found. Install 'App Installer' from the Microsoft Store first." -ForegroundColor Red
+    exit 1
+}
+
+$packages = @(
+    "Git.Git",
+    "GitHub.cli",
+    "Starship.Starship",
+    "junegunn.fzf",
+    "ajeetdsouza.zoxide",
+    "sharkdp.bat",
+    "sharkdp.fd",
+    "BurntSushi.ripgrep.MSVC",
+    "eza-community.eza",
+    "dandavison.delta",
+    "jqlang.jq",
+    "Neovim.Neovim",
+    "jftuga.less",
+    "JesseDuffield.lazygit",
+    "atuinsh.atuin",
+    "jdx.mise",
+    "Microsoft.PowerShell",
+    "Microsoft.WindowsTerminal",
+    "DEVCOM.JetBrainsMonoNerdFont"
+)
+
+foreach ($pkg in $packages) {
+    Write-Host "==> winget install $pkg"
+    winget install --id $pkg --silent --accept-source-agreements --accept-package-agreements --exact 2>&1 | Out-Null
+}
+
+# PSReadLine (latest)
+Install-Module PSReadLine -Force -SkipPublisherCheck -Scope CurrentUser
+
+Write-Host "==> Done. Open a new PowerShell, then run: chezmoi apply"
+{{ end -}}

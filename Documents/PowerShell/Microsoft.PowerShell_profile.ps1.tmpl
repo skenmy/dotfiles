@@ -1,0 +1,63 @@
+{{- if eq .chezmoi.os "windows" -}}
+# ---- PowerShell profile (Windows) ----
+
+# UTF-8 everywhere
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+# PSReadLine: nicer history + completion
+if (Get-Module -ListAvailable -Name PSReadLine) {
+    Import-Module PSReadLine
+    Set-PSReadLineOption -PredictionSource HistoryAndPlugin -PredictionViewStyle ListView -EditMode Windows
+    Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+    Set-PSReadLineKeyHandler -Key Ctrl+r -Function ReverseSearchHistory
+}
+
+# Starship prompt
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+    $ENV:STARSHIP_CONFIG = "$HOME\.config\starship.toml"
+    Invoke-Expression (&starship init powershell)
+}
+
+# zoxide
+if (Get-Command zoxide -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { (zoxide init powershell --cmd cd | Out-String) })
+}
+
+# mise
+if (Get-Command mise -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { (mise activate pwsh | Out-String) })
+}
+
+# atuin
+if (Get-Command atuin -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { (atuin init powershell | Out-String) })
+}
+
+# gh completion
+if (Get-Command gh -ErrorAction SilentlyContinue) {
+    Invoke-Expression -Command $(gh completion -s powershell | Out-String)
+}
+
+# Aliases
+Set-Alias -Name vim -Value nvim -ErrorAction SilentlyContinue
+Set-Alias -Name vi  -Value nvim -ErrorAction SilentlyContinue
+Set-Alias -Name g   -Value git
+Set-Alias -Name k   -Value kubectl -ErrorAction SilentlyContinue
+Set-Alias -Name tf  -Value terraform -ErrorAction SilentlyContinue
+
+function gs  { git status }
+function gd  { git diff $args }
+function gp  { git push $args }
+function gl  { git pull $args }
+function gco { git checkout $args }
+function gcm { git commit -m $args }
+function ll  { if (Get-Command eza -ErrorAction SilentlyContinue) { eza -lah --git --icons $args } else { Get-ChildItem -Force $args } }
+function la  { ll $args }
+function .. { Set-Location .. }
+function ... { Set-Location ../.. }
+
+# Local override
+$localProfile = "$HOME\Documents\PowerShell\profile.local.ps1"
+if (Test-Path $localProfile) { . $localProfile }
+{{ end -}}

@@ -1,0 +1,15 @@
+{{- /*
+  Auto-populated from GitHub @skenmy at chezmoi apply time.
+  To add a per-host extra key, append to ~/.ssh/authorized_keys.local.
+*/ -}}
+# Public keys for @skenmy (synced from github.com/skenmy.keys)
+{{ range gitHubKeys "skenmy" -}}
+{{ .Key }}
+{{ end -}}
+
+{{- $localExtra := joinPath .chezmoi.homeDir ".ssh" "authorized_keys.local" }}
+{{- if stat $localExtra }}
+
+# Local extras
+{{ include $localExtra }}
+{{- end }}

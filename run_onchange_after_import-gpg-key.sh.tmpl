@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+{{- /* Re-runs whenever gpg-public-key.asc content changes (hash is templated). */ -}}
+# gpg-public-key.asc hash: {{ include "gpg-public-key.asc" | sha256sum }}
+set -euo pipefail
+
+if ! command -v gpg >/dev/null 2>&1; then
+    echo "gpg not installed; skipping GPG public key import"
+    exit 0
+fi
+
+KEY_FILE="{{ .chezmoi.sourceDir }}/gpg-public-key.asc"
+if [ ! -f "$KEY_FILE" ]; then
+    exit 0
+fi
+
+# Import once; gpg is idempotent.
+gpg --import "$KEY_FILE" 2>&1 | sed 's/^/  /' || true
+
+# Mark as ultimately trusted so signing works without a fresh trust-db prompt
+{{- if .signingKey }}
+echo "{{ .signingKey }}:6:" | gpg --import-ownertrust 2>/dev/null || true
+{{- end }}

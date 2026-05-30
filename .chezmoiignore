@@ -1,0 +1,27 @@
+{{/* Per-OS exclusions */}}
+{{- if ne .chezmoi.os "darwin" }}
+Brewfile
+.config/ghostty
+run_once_install-packages-darwin.sh
+{{- end }}
+{{- if ne .chezmoi.os "linux" }}
+run_once_install-packages-linux.sh
+{{- end }}
+{{- if ne .chezmoi.os "windows" }}
+Documents
+run_once_install-packages-windows.ps1
+{{- end }}
+{{- if eq .chezmoi.os "windows" }}
+.zshrc
+.zshenv
+.zprofile
+.zsh_plugins.txt
+.tmux.conf
+.config/ghostty
+{{- end }}
+{{- if default false .headless }}
+.config/ghostty
+{{- end }}
+
+README.md
+gpg-public-key.asc

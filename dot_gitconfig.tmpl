@@ -1,0 +1,108 @@
+[user]
+    name = {{ .name }}
+    email = {{ .email }}
+{{- if .signingKey }}
+    signingkey = {{ .signingKey }}
+{{- end }}
+
+{{- if .signingKey }}
+
+[commit]
+    gpgsign = true
+
+[tag]
+    gpgsign = true
+
+[gpg]
+{{- if eq .chezmoi.os "darwin" }}
+    program = /opt/homebrew/bin/gpg
+{{- else }}
+    program = gpg
+{{- end }}
+{{- end }}
+
+[init]
+    defaultBranch = main
+
+[core]
+    editor = nvim
+    autocrlf = input
+    pager = delta
+    excludesfile = ~/.gitignore_global
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+    light = false
+    line-numbers = true
+    side-by-side = false
+    syntax-theme = "Monokai Extended"
+
+[merge]
+    conflictstyle = zdiff3
+    tool = nvimdiff
+
+[diff]
+    colorMoved = default
+    algorithm = histogram
+
+[pull]
+    rebase = false
+
+[push]
+    default = current
+    autoSetupRemote = true
+    followTags = true
+
+[fetch]
+    prune = true
+    pruneTags = true
+
+[rebase]
+    autoStash = true
+    autoSquash = true
+
+[rerere]
+    enabled = true
+
+[branch]
+    sort = -committerdate
+
+[column]
+    ui = auto
+
+[help]
+    autocorrect = prompt
+
+[url "git@github.com:"]
+    insteadOf = "gh:"
+
+[url "git@github.com:{{ .name | replace " " "" | lower }}/"]
+    insteadOf = "me:"
+
+[alias]
+    s = status -sb
+    co = checkout
+    sw = switch
+    br = branch
+    cm = commit -m
+    ca = commit --amend --no-edit
+    cane = commit --amend
+    unstage = reset HEAD --
+    last = log -1 HEAD
+    lg = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(auto)%d%C(reset)' --all
+    ls = log --pretty=format:'%C(yellow)%h %Cred%ad %Cblue%an%Cgreen%d %Creset%s' --date=short
+    diffs = diff --staged
+    pushf = push --force-with-lease
+    wip = !git add -A && git commit -m 'wip' --no-verify
+    undo = reset HEAD~1 --mixed
+    cleanup = !git branch --merged | grep -vE '^\\*|main|master|develop' | xargs -n 1 git branch -d
+    root = rev-parse --show-toplevel
+    aliases = config --get-regexp ^alias\\.
+    fixup = "!f() { git commit --fixup=$1; }; f"
+    sync = !git pull --rebase && git push
+
+[color]
+    ui = auto

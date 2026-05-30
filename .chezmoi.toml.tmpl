@@ -1,0 +1,19 @@
+{{- $name := promptStringOnce . "name" "Full name" "Paul Williams" -}}
+{{- $email := promptStringOnce . "email" "Email" "paul@skenmy.com" -}}
+{{- $signingKey := promptStringOnce . "signingKey" "GPG signing key (empty to skip)" "9BFD73704EA02674" -}}
+{{- $headless := promptBoolOnce . "headless" "Is this a headless server (skip GUI configs)?" false -}}
+{{- $work := promptBoolOnce . "work" "Is this a work machine?" false -}}
+
+[data]
+    name = {{ $name | quote }}
+    email = {{ $email | quote }}
+    signingKey = {{ $signingKey | quote }}
+    headless = {{ $headless }}
+    work = {{ $work }}
+
+[git]
+    autoCommit = false
+    autoPush = false
+
+[diff]
+    pager = "delta --paging=never"

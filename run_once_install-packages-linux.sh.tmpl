@@ -1,0 +1,88 @@
+{{- if eq .chezmoi.os "linux" -}}
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "==> Linux package install"
+
+SUDO=""
+[ "$(id -u)" -ne 0 ] && SUDO="sudo"
+
+# ---- Common CLI packages (cross-distro names where possible) ----
+COMMON_PKGS=(git curl wget unzip ca-certificates gnupg zsh tmux jq tree)
+{{- if not .headless }}
+COMMON_PKGS+=(neovim ripgrep fd-find bat)
+{{- else }}
+COMMON_PKGS+=(neovim ripgrep fd-find bat)
+{{- end }}
+
+# Power tools that may need backports/cargo/manual install
+EXTRAS_VIA_BIN=(starship mise atuin zoxide eza lazygit delta gh)
+
+install_apt() {
+    export DEBIAN_FRONTEND=noninteractive
+    $SUDO apt-get update -y
+    $SUDO apt-get install -y "${COMMON_PKGS[@]}" build-essential
+    # bat is `batcat` on Debian/Ubuntu; symlink for convenience
+    command -v batcat >/dev/null && ! command -v bat >/dev/null && \
+        $SUDO ln -sf "$(command -v batcat)" /usr/local/bin/bat
+    command -v fdfind >/dev/null && ! command -v fd >/dev/null && \
+        $SUDO ln -sf "$(command -v fdfind)" /usr/local/bin/fd
+}
+
+install_dnf() {
+    $SUDO dnf install -y "${COMMON_PKGS[@]}" @development-tools || true
+}
+
+install_pacman() {
+    $SUDO pacman -Sy --noconfirm "${COMMON_PKGS[@]}" base-devel || true
+}
+
+install_apk() {
+    $SUDO apk add --no-cache "${COMMON_PKGS[@]}" build-base
+}
+
+if   command -v apt-get >/dev/null; then install_apt
+elif command -v dnf     >/dev/null; then install_dnf
+elif command -v pacman  >/dev/null; then install_pacman
+elif command -v apk     >/dev/null; then install_apk
+else
+    echo "!! Unknown package manager; install ${COMMON_PKGS[*]} manually" >&2
+fi
+
+# ---- Install via official scripts (works on every distro) ----
+mkdir -p "$HOME/.local/bin"
+export PATH="$HOME/.local/bin:$PATH"
+
+if ! command -v starship >/dev/null; then
+    curl -sS https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin"
+fi
+
+if ! command -v mise >/dev/null; then
+    curl -fsSL https://mise.run | sh
+fi
+
+if ! command -v atuin >/dev/null; then
+    curl -fsSL https://github.com/atuinsh/atuin/releases/latest/download/atuin-installer.sh | sh -s -- --no-modify-path
+fi
+
+if ! command -v zoxide >/dev/null; then
+    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+fi
+
+if ! command -v fzf >/dev/null && [ ! -d "$HOME/.fzf" ]; then
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+    "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish
+fi
+
+# ---- Antidote (zsh plugin manager) ----
+if [ ! -d "$HOME/.antidote" ]; then
+    git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
+fi
+
+# ---- TPM ----
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+fi
+
+echo "==> Done. chsh -s $(command -v zsh) if zsh isn't your default shell."
+{{ end -}}

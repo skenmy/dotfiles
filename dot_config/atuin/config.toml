@@ -1,0 +1,26 @@
+# atuin: encrypted history sync
+# Run once to enable sync:
+#   atuin register -u <user> -e <email>   (or `atuin login`)
+#   atuin import auto
+#   atuin sync
+
+dialect = "uk"
+auto_sync = true
+update_check = false
+sync_frequency = "5m"
+sync_address = "https://api.atuin.sh"
+
+search_mode = "fuzzy"
+filter_mode = "global"
+filter_mode_shell_up_key_binding = "session"
+
+style = "compact"
+inline_height = 25
+show_preview = true
+max_preview_height = 4
+show_help = true
+
+history_filter = [
+    "^secret-",
+    "^ ",
+]

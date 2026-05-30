@@ -1,0 +1,29 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/usr/bin/env bash
+set -uo pipefail   # keep going on errors so a missing cask doesn't abort everything
+
+echo "==> macOS package install"
+
+# Install Homebrew if missing
+if ! command -v brew >/dev/null 2>&1; then
+    echo "==> Installing Homebrew"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
+fi
+
+echo "==> brew bundle"
+brew bundle --file="{{ .chezmoi.homeDir }}/Brewfile" {{ if .headless }}--no-upgrade{{ end }} || \
+    echo "!! brew bundle reported errors; check 'brew bundle check' to see what's missing"
+
+# TPM (tmux plugins)
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+fi
+
+# fzf key bindings + completions (homebrew install hook)
+if command -v brew >/dev/null && [ -x "$(brew --prefix)/opt/fzf/install" ]; then
+    "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish || true
+fi
+
+echo "==> Done. Open a new terminal, then run: chezmoi apply"
+{{ end -}}

@@ -1,0 +1,25 @@
+# ~/.ssh/config — sensible defaults across all hosts
+
+Host *
+    AddKeysToAgent yes
+    ServerAliveInterval 60
+    ServerAliveCountMax 30
+    HashKnownHosts no
+    StrictHostKeyChecking accept-new
+    VisualHostKey yes
+    ControlMaster auto
+    ControlPath ~/.ssh/cm-%r@%h:%p
+    ControlPersist 10m
+{{- if eq .chezmoi.os "darwin" }}
+    UseKeychain yes
+    IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+{{- end }}
+
+# GitHub
+Host github.com gh
+    HostName github.com
+    User git
+    PreferredAuthentications publickey
+
+# Per-host local overrides (kept out of dotfiles)
+Include ~/.ssh/config.local

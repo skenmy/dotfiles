@@ -1,0 +1,15 @@
+# mise: polyglot runtime version manager
+# `mise use -g node@lts` to set a global default
+# Add a `.mise.toml` in any project for per-project versions
+
+[settings]
+experimental = true
+not_found_auto_install = false
+legacy_version_file = true
+
+[tools]
+# Defaults — uncomment / pin as desired
+# node = "lts"
+# python = "3.12"
+# go = "latest"
+# rust = "stable"
