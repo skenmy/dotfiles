@@ -1,0 +1,19 @@
+{
+  "workbench.startupEditor": "none",
+  "explorer.confirmDragAndDrop": false,
+  "explorer.confirmDelete": false,
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "githubPullRequests.pushBranch": "always",
+  "files.autoSave": "onFocusChange",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "javascript.format.semicolons": "insert",
+  "typescript.format.semicolons": "insert",
+  "parallels-desktop.extension.path": "/Users/paul/.parallels-desktop-vscode",
+  "parallels-desktop.prlctl.path": "/usr/local/bin/prlctl",
+  "parallels-desktop.git.path": "/usr/bin/git",
+  "parallels-desktop.brew.path": "/opt/homebrew/bin/brew",
+  "parallels-desktop.devops-service.path": "/Users/paul/.parallels-desktop-vscode/tools/prldevops"
+}

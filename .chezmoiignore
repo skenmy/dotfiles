@@ -24,6 +24,8 @@ run_once_install-packages-windows.ps1
 {{- end }}
 {{- if default false .headless }}
 .config/ghostty
+.config/code
+Library/Application Support/Code
 {{- end }}
 
 README.md

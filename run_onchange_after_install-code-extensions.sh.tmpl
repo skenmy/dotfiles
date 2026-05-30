@@ -1,0 +1,32 @@
+{{- if and (eq .chezmoi.os "darwin") (not .headless) -}}
+#!/usr/bin/env bash
+# extensions hash: {{ include "dot_config/code/extensions.txt" | sha256sum }}
+#
+# Diff ~/.config/code/extensions.txt against what's installed locally;
+# install missing ones. Append-only — local additions stay until you
+# manually edit the source list. Re-runs whenever extensions.txt
+# content changes.
+set -uo pipefail
+
+command -v code >/dev/null 2>&1 || { echo "code CLI not on PATH; skipping. (`Cmd+Shift+P` → \"Shell Command: Install 'code' command in PATH\")"; exit 0; }
+
+WANT="$HOME/.config/code/extensions.txt"
+[ -f "$WANT" ] || { echo "no $WANT; skipping"; exit 0; }
+
+# `code --list-extensions` outputs the publisher.name format; same as our file.
+have="$(code --list-extensions 2>/dev/null | sort -u)"
+want="$(grep -E '^[a-zA-Z0-9_.-]+\.[a-zA-Z0-9_.-]+$' "$WANT" | sort -u)"
+
+missing="$(comm -23 <(printf '%s\n' "$want") <(printf '%s\n' "$have"))"
+
+if [ -z "$missing" ]; then
+    echo "==> code extensions: all in sync"
+    exit 0
+fi
+
+echo "==> installing $(printf '%s\n' "$missing" | wc -l | tr -d ' ') missing code extension(s)"
+printf '%s\n' "$missing" | while read -r ext; do
+    [ -z "$ext" ] && continue
+    code --install-extension "$ext" --force 2>&1 | sed 's/^/    /'
+done
+{{- end }}
