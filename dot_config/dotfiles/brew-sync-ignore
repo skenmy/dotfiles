@@ -1,0 +1,8 @@
+# dotfiles-brew-sync ignore list — one extended-regex per line.
+# Matched against rendered Brewfile lines, so anchor with ^ and use quotes.
+#
+# Examples:
+#   ^cask "firefox"$
+#   ^brew "experimental-tool"$
+#
+# Lines starting with # are comments and ignored.

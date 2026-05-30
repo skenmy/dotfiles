@@ -113,6 +113,16 @@ security add-generic-password -T '' -s bw-master -a "$USER" -w
 
 You'll be prompted for the Bitwarden master password once. After that, `bootstrap.sh` will unlock the vault via Keychain (Touch ID gates the Keychain read) instead of prompting.
 
+### Brew auto-sync (macOS)
+
+If you `brew install <foo>` on one Mac, you don't want to remember to PR it into the Brewfile. A nightly script handles it:
+
+- **`~/.local/bin/dotfiles-brew-sync`** — runs `brew bundle dump`, diffs against the source `Brewfile`, appends any newly-installed packages under a dated `# auto-synced from <host>` comment, commits, pushes.
+- Launchd schedule: 02:00 local, before the 03:17 chezmoi-update — so other Macs pick up the change the same morning.
+- **Append-only by design.** Local uninstalls do *not* remove from Brewfile (removal is intentional and should go via a PR).
+- Per-machine exceptions: `~/.config/dotfiles/brew-sync-ignore` — one extended-regex per line, matched against Brewfile lines. Add `^cask "firefox"$` to keep Firefox on this Mac only.
+- Logs at `~/.local/state/dotfiles-brew-sync/last.log`. Run the script ad-hoc to force a sync.
+
 ### Auto-updates
 
 Every box runs `chezmoi update` daily at 03:17 local — pulls from `main` and applies.
