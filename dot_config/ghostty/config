@@ -1,35 +1,66 @@
+# Ghostty — sensible-defaults config with light, well-marked customisation.
+# Every non-default below has a comment explaining the choice. See
+# https://ghostty.org/docs/config/reference for the full option list, and
+# `ghostty +show-config --default --docs` to dump every default with inline docs.
+
+# ── Font ──────────────────────────────────────────────────────────
 font-family = "JetBrainsMono Nerd Font"
 font-size = 14
-font-feature = -calt
+# Antialiasing weight bump on macOS — text is easier to read against a dark theme.
+font-thicken = true
 
+# ── Theme ─────────────────────────────────────────────────────────
+# Pairs with the starship Tokyo Night-ish palette and neovim's tokyonight colorscheme.
 theme = "TokyoNight"
+# Slight transparency for a less heavy look. Drop to 1.0 if it bothers you.
 background-opacity = 0.96
+
+# ── Window ────────────────────────────────────────────────────────
 window-padding-x = 10
 window-padding-y = 10
 window-padding-balance = true
-window-decoration = true
+# Restore tabs/splits when Ghostty reopens. Default ("default") doesn't.
 window-save-state = always
+# Dim inactive splits so the focused one is obvious.
+unfocused-split-opacity = 0.7
 
+# ── Cursor ────────────────────────────────────────────────────────
 cursor-style = block
 cursor-style-blink = false
-shell-integration = zsh
-shell-integration-features = cursor,sudo,title
 
+# ── Behaviour ─────────────────────────────────────────────────────
+# Tmux-style: selecting text copies it to the clipboard, no Cmd+C needed.
 copy-on-select = clipboard
+# Prevent a malicious paste from executing without confirmation
+# (bracketed-paste warning when the buffer contains newlines etc.).
 clipboard-paste-protection = true
 mouse-hide-while-typing = true
+# 10M lines of scrollback. Pages in from disk only as needed.
+scrollback-limit = 10000000
 
-# Quick toggles
-keybind = cmd+t=new_tab
-keybind = cmd+w=close_surface
-keybind = cmd+d=new_split:right
-keybind = cmd+shift+d=new_split:down
+# Shell integration — leave at defaults. Ghostty auto-detects zsh and
+# enables cursor/sudo/title PLUS ssh-env/ssh-terminfo, which set up remote
+# terminals correctly when you SSH into a box that doesn't know Ghostty's
+# terminfo (most of them). Don't override unless you have a reason.
+
+# ── macOS-specific ────────────────────────────────────────────────
+# Option sends ESC instead of inserting a Unicode char. Required for
+# tmux/vim Alt-bindings, and for sending real ESC in some apps.
+macos-option-as-alt = true
+# Show tabs across the titlebar (vs the default "native" macOS bar).
+macos-titlebar-style = tabs
+
+# ── Keybindings ───────────────────────────────────────────────────
+# All other Cmd bindings (new tab/window, splits, paste, etc.) are Ghostty
+# defaults — see `ghostty +list-keybinds`. Only the two below override
+# anything.
+
+# Vim-style split nav. Cmd+H normally hides the app on macOS; we reclaim
+# it for "goto left split". Comment these out if you want Hide back.
 keybind = cmd+h=goto_split:left
 keybind = cmd+j=goto_split:bottom
 keybind = cmd+k=goto_split:top
 keybind = cmd+l=goto_split:right
-keybind = cmd+enter=toggle_fullscreen
 
-# macOS niceties
-macos-titlebar-style = tabs
-macos-option-as-alt = true
+# Cmd+Enter to toggle fullscreen — easier than the macOS default Ctrl+Cmd+F.
+keybind = cmd+enter=toggle_fullscreen
