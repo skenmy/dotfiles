@@ -6,33 +6,57 @@ One source of truth → applied identically to every MacBook, Windows PC, and Li
 
 ---
 
-## Quick start (any new machine)
+## Quick start
 
-### macOS / Linux
+### Just dotfiles + packages (one command)
 
+**macOS / Linux:**
 ```sh
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply skenmy
 ```
 
-### Windows (PowerShell)
-
+**Windows (PowerShell):**
 ```powershell
 iex "&{$(irm 'https://get.chezmoi.io/ps1')} -b $HOME/.local/bin init --apply skenmy"
 ```
 
-That's it. The script will:
+That clones the repo, prompts for `name`/`email`/`signingKey`/`headless`/`work`, renders templates into `$HOME`, and runs `run_once_*` scripts to install packages and apply macOS defaults.
 
-1. Install chezmoi if missing.
-2. Clone this repo into `~/.local/share/chezmoi`.
-3. Prompt for your name / email / GPG key / headless / work flags (stored at `~/.config/chezmoi/chezmoi.toml`).
-4. Render templates and copy/symlink them into `$HOME`.
-5. Run `run_once_*` scripts to bootstrap packages, fonts, tmux plugins, macOS defaults.
+### Everything (dotfiles + GPG + SSH + atuin login)
 
-After a fresh install, you may want to:
+```sh
+curl -fsSL https://raw.githubusercontent.com/skenmy/dotfiles/main/scripts/bootstrap.sh | bash
+```
+
+`scripts/bootstrap.sh` adds, on top of the chezmoi step above:
+- Installs Bitwarden CLI (`bw`) if missing.
+- Unlocks the vault — Touch ID via macOS Keychain if the entry `bw-master` exists, otherwise prompts for master password.
+- Pulls **GPG private key** from `gpg/9BFD73704EA02674`, imports it + sets ultimate trust.
+- Pulls **SSH private key** from `ssh/personal/id_ed25519`, writes to `~/.ssh/` with 0600.
+- Stashes **atuin password + encryption key** from `atuin/skenmy.com`, runs `atuin login -u skenmy -p … -k …` after chezmoi has installed atuin, then `atuin import auto && atuin sync -f`.
+
+The schema is whatever `scripts/seed-bitwarden.sh` puts in the vault (see below). All steps are idempotent — re-running is safe.
+
+#### One-time seeding (run on a machine that already has all your secrets)
+
+```sh
+~/.local/share/chezmoi/scripts/seed-bitwarden.sh
+```
+
+Reads `~/.local/share/atuin/key` and `~/.ssh/id_ed25519`, asks for the atuin password, exports the GPG private key + ownertrust, and pushes everything into Bitwarden under fixed item names (`atuin/skenmy.com`, `gpg/<KEY_ID>`, `ssh/personal/<KEY_NAME>`).
+
+#### Enable Touch ID unlock on macOS (optional, one-time)
+
+```sh
+security add-generic-password -T '' -s bw-master -a "$USER" -w
+```
+
+You'll be prompted for the Bitwarden master password once. After that, `bootstrap.sh` will unlock the vault via Keychain (Touch ID gates the Keychain read) instead of prompting.
+
+### Post-bootstrap
 
 - Open a new shell (so starship/mise/atuin/zsh load).
 - `chsh -s $(which zsh)` if zsh isn't your default shell (Linux).
-- `atuin register` (or `atuin login`) to enable encrypted history sync.
 - `mise use -g node@lts` (or python/go/rust) to install runtimes.
 
 ---
