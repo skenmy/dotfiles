@@ -55,6 +55,7 @@ cask "telegram"
 cask "claude-code"
 cask "zulu@17"
 cask "logi-options+"
+cask "tailscale"
 
 # Fonts (Nerd Fonts for icons in starship/eza/etc.)
 cask "font-jetbrains-mono-nerd-font"
