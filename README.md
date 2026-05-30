@@ -24,6 +24,16 @@ sudo loginctl enable-linger "$USER"
 
 Without this, the user-level systemd timer (which runs `chezmoi update` daily) won't fire when you're logged out. Skip on Linux *desktops* you stay logged into.
 
+### Join the tailnet (personal devices only)
+
+```sh
+# macOS: open the Tailscale menu-bar app and click "Log in" — installed by bootstrap.
+# Linux:
+sudo tailscale up --operator="$USER"
+```
+
+Tailscale is installed automatically by `bootstrap.sh` on personal boxes (it's skipped when `work=true`). Work boxes use the employer-managed install. Authenticating is interactive (browser-based) and only needed once per device.
+
 ### Every Windows box
 
 ```powershell

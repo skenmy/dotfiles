@@ -74,6 +74,13 @@ if ! command -v fzf >/dev/null && [ ! -d "$HOME/.fzf" ]; then
     "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish
 fi
 
+# ---- Tailscale (personal devices only — work boxes use the employer install) ----
+{{- if not .work }}
+if ! command -v tailscale >/dev/null; then
+    curl -fsSL https://tailscale.com/install.sh | sh
+fi
+{{- end }}
+
 # ---- Antidote (zsh plugin manager) ----
 if [ ! -d "$HOME/.antidote" ]; then
     git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
