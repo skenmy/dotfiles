@@ -174,7 +174,7 @@ Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. 
 - **mise** (`dot_config/mise/config.toml`) — replaces nvm/rbenv/pyenv/asdf. Lazy, single binary, project-local `.mise.toml` overrides.
 
 ### Shell history
-- **atuin** (`dot_config/atuin/config.toml`) — sqlite-backed history with fuzzy search and **end-to-end encrypted sync**. Bound to `Ctrl-R`.
+- **atuin** (`dot_config/atuin/config.toml`) — sqlite-backed history with fuzzy search and **end-to-end encrypted sync** against the self-hosted server at `https://atuin.skenmy.com` (deployed via `skenmy-vps`). Bound to `Ctrl-R`. Server only ever stores ciphertext; the encryption key never leaves the client.
 
 ### Editor
 - **Neovim** (`dot_config/nvim/`) — kickstart-style lazy.nvim config. Tokyonight colorscheme.
@@ -191,6 +191,9 @@ Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. 
 
 ### Terminal emulator (macOS desktop only)
 - **Ghostty** (`dot_config/ghostty/config`) — JetBrainsMono Nerd Font, TokyoNight theme, cmd-based splits and tabs, shell integration, option-as-alt.
+
+### Mesh VPN (personal boxes only)
+- **Tailscale** — installed via the Brewfile cask on macOS and the official `install.sh` on Linux. On Linux, install is gated to `work=false` so employer-managed boxes aren't disturbed. Authenticating is interactive (`sudo tailscale up --operator=$USER` on Linux, menu-bar app on macOS) and only needed once per device.
 
 ### Git
 - **`dot_gitconfig.tmpl`** — name/email/signingKey from chezmoi prompts. GPG sign commits and tags. **delta** as pager and interactive diff filter. `init.defaultBranch=main`, `pull.rebase=false`, `push.default=current` with `autoSetupRemote`, `fetch.prune`, `rebase.autoStash`+`autoSquash`, `rerere.enabled`, branches sorted by recent commit, `merge.conflictstyle=zdiff3`, `diff.algorithm=histogram`, `help.autocorrect=prompt`.
@@ -223,7 +226,7 @@ CLI: `zsh starship antidote mise direnv fzf zoxide eza bat ripgrep fd jq yq btop
 
 Kubernetes / infra: `kubernetes-cli helm kustomize kubeseal flux terraform`.
 
-Casks (skipped on headless): `ghostty iterm2 raycast docker docker-desktop spotify telegram claude-code zulu@17 logi-options+`.
+Casks: `ghostty iterm2 raycast docker-desktop spotify telegram claude-code zulu@17 logi-options+ tailscale`. (Headless macOS boxes get the same casks; only the Ghostty *config file* is skipped on headless via `.chezmoiignore`.)
 
 Fonts: `font-jetbrains-mono-nerd-font font-symbols-only-nerd-font`.
 
@@ -242,7 +245,7 @@ Prompted on first run, stored in `~/.config/chezmoi/chezmoi.toml`:
 | `email` | git `user.email` |
 | `signingKey` | git `user.signingkey` (empty → no GPG signing) |
 | `headless` | Skip GUI configs (Ghostty), skip macOS defaults, suppress cask upgrades |
-| `work` | (Reserved — branch templates on work vs personal if needed) |
+| `work` | Personal vs employer-managed. On Linux, gates the auto-install of Tailscale (skipped on work boxes). |
 
 Change them later: `chezmoi edit-config`, then `chezmoi apply`.
 
@@ -250,23 +253,24 @@ Change them later: `chezmoi edit-config`, then `chezmoi apply`.
 
 ## Secrets
 
-The repo is **public**. Never commit anything secret. For per-machine secrets, use one of:
+The repo is **public**. Never commit anything secret. Options for per-machine secrets, in rough order of how often I use them:
 
-- A `~/.zshrc.local` file (sourced at the end of `.zshrc`, not tracked).
-- chezmoi's templating with `{{ onepasswordRead ... }}` or `{{ pass ... }}`.
-- chezmoi-encrypted files (via the existing `~/.age-key`): name a file `encrypted_secret_thing.age.tmpl` — chezmoi decrypts on apply.
+- **Bitwarden + `scripts/bootstrap.sh`** — the bootstrap pulls GPG private key, SSH private keys, and atuin credentials from the vault under fixed item names (`atuin/skenmy.com`, `gpg/<KEY_ID>`, `ssh/personal/<KEY_NAME>`). Seed once with `scripts/seed-bitwarden.sh`. This is the path the TL;DR assumes.
+- **`~/.zshrc.local`** — sourced at the end of `.zshrc`, not tracked. Good for one-off per-machine env vars.
+- **chezmoi templating** with `{{ bitwarden ... }}`, `{{ onepasswordRead ... }}`, or `{{ pass ... }}` — pulls a secret at apply time, so the source remains plaintext but the rendered file isn't.
+- **chezmoi-encrypted files** (via the existing `~/.age-key`) — name a file `encrypted_secret_thing.age.tmpl` and chezmoi decrypts on apply.
 
 ---
 
 ## Adding a new file
 
 ```sh
-chezmoi add ~/.config/foo/bar.conf            # static file
-chezmoi add --template ~/.config/foo/bar.conf # template (will need {{ … }} edits)
-chezmoi cd                                    # cd into source
-$EDITOR dot_config/foo/bar.conf               # edit
-chezmoi diff && chezmoi apply                 # verify + apply
-git add -A && git commit -m "add foo config" && git push
+chezmoi add ~/.config/foo/bar.conf                       # static file
+chezmoi add --template ~/.config/foo/bar.conf            # template (will need {{ … }} edits)
+$EDITOR "$(chezmoi source-path)/dot_config/foo/bar.conf" # edit (substitute the chezmoi-mangled name)
+chezmoi diff && chezmoi apply                            # verify + apply
+cd "$(chezmoi source-path)" && git add -A \
+    && git commit -m "add foo config" && git push
 ```
 
 ---
