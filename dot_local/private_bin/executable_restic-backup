@@ -42,6 +42,12 @@ command -v restic >/dev/null || { say "restic not on PATH; aborting"; exit 0; }
 
 say "starting restic backup on $HOST → $RESTIC_REPOSITORY"
 
+# Force periodic progress output even when stdout isn't a TTY.
+# restic disables its rotating widget on non-TTY by default; this env var
+# (frames per second, float) makes it emit a one-line status periodically
+# instead — visible via `tail -f ~/.local/state/restic/last.log`.
+export RESTIC_PROGRESS_FPS="${RESTIC_PROGRESS_FPS:-0.1}"
+
 # init repo if it's empty (first machine; subsequent machines skip — already exists)
 if ! restic snapshots --quiet --json >/dev/null 2>&1; then
     say "repository looks empty — running restic init"
