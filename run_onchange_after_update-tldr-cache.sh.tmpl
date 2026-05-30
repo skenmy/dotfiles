@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Refresh the tealdeer offline cache on apply, but not more often than weekly.
+# version stamp: 2026-05-30-v1
+set -uo pipefail
+
+command -v tldr >/dev/null || exit 0
+
+# tealdeer caches pages locally; refresh quietly. --update is a no-op if recent.
+tldr --update >/dev/null 2>&1 || true

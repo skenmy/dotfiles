@@ -81,6 +81,36 @@ if ! command -v tailscale >/dev/null; then
 fi
 {{- end }}
 
+# ---- Terminal quick-wins ----
+# tealdeer (fast tldr-pages client) and xh (friendlier curl) via cargo if available,
+# else download release binary into ~/.local/bin.
+install_release_bin() {
+    local repo="$1" name="$2" pattern="$3"
+    local arch; arch="$(uname -m)"
+    case "$arch" in x86_64) arch=x86_64 ;; aarch64|arm64) arch=aarch64 ;; esac
+    local url
+    url="$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" \
+        | grep '"browser_download_url"' \
+        | grep -E "$pattern" \
+        | grep -E "$arch" \
+        | head -1 \
+        | cut -d'"' -f4)"
+    [ -z "$url" ] && { echo "  - $name: no asset matched $pattern / $arch"; return; }
+    local tmp; tmp="$(mktemp -d)"
+    curl -fsSL "$url" -o "$tmp/asset" && (
+        cd "$tmp"
+        case "$url" in
+            *.tar.gz|*.tgz) tar xzf asset ;;
+            *.zip) unzip -q asset ;;
+        esac
+        find . -type f -name "$name" -executable -exec install -m 0755 {} "$HOME/.local/bin/$name" \;
+    )
+    rm -rf "$tmp"
+}
+
+command -v tldr >/dev/null || install_release_bin "dbrgn/tealdeer" "tldr" "linux-musl.tar.gz|linux-gnu.tar.gz"
+command -v xh   >/dev/null || install_release_bin "ducaale/xh"     "xh"   "unknown-linux-musl.tar.gz"
+
 # ---- Antidote (zsh plugin manager) ----
 if [ ! -d "$HOME/.antidote" ]; then
     git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"

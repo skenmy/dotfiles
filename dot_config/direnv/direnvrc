@@ -1,0 +1,37 @@
+# direnv stdlib extensions — loaded for every .envrc on this machine.
+# Reference: https://direnv.net/man/direnv-stdlib.1.html
+
+# ---- Layouts ----
+# `layout mise` in a project's .envrc activates the mise runtime versions
+# defined in that directory's .mise.toml (or any parent's). Saves the
+# usual `mise activate` dance per-project.
+layout_mise() {
+    eval "$(mise env -s bash)"
+}
+
+# `dotenv_if_exists [path]` — load env vars from .env without complaining
+# if the file is missing. Cleaner than `dotenv` in starter templates.
+dotenv_if_exists() {
+    local path="${1:-.env}"
+    [ -f "$path" ] && dotenv "$path"
+}
+
+# `use_flake` — Nix flakes integration. No-op if nix isn't installed.
+use_flake() {
+    if has nix; then
+        watch_file flake.nix flake.lock
+        eval "$(nix print-dev-env --profile "$(direnv_layout_dir)/flake-profile")"
+    fi
+}
+
+# `use_op` — pull a 1Password secret into env. Example .envrc:
+#     use_op DB_URL "op://Private/postgres-dev/url"
+use_op() {
+    local var="$1" ref="$2"
+    if has op; then
+        export "$var"="$(op read "$ref")"
+    fi
+}
+
+# Strict mode by default so .envrc typos fail fast.
+strict_env

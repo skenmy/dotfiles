@@ -26,6 +26,9 @@ brew "lazygit"
 brew "git-delta"
 brew "gh"
 brew "atuin"
+brew "tealdeer"       # fast `tldr` pages — "how do I tar this again?"
+brew "xh"             # friendlier curl: `xh POST api.example.com name=paul`
+brew "mkcert"         # trusted local TLS for https://localhost
 
 # Tooling already in use — preserved
 brew "gnupg"
