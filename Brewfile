@@ -44,6 +44,7 @@ brew "watchman"
 
 # Kubernetes / infra
 brew "kubernetes-cli"
+brew "k9s"            # TUI dashboard for kubectl — `k9s`
 brew "helm"
 brew "kustomize"
 brew "kubeseal"
