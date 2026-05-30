@@ -213,6 +213,31 @@ Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. 
   ```
 - Add language-specific hooks (ruff / eslint / gofumpt / etc.) per-repo *below* the defaults — they're project state, not user state, so they don't belong in this dotfile.
 
+### Encrypted backup (restic)
+
+Nightly snapshot of `$HOME` to a restic repository (B2 / S3 / SFTP / etc.). Encrypted and deduplicated at rest — the server never sees plaintext.
+
+| File | Purpose |
+|---|---|
+| `~/.local/bin/restic-backup` | Worker. Reads `~/.config/restic/env`, runs `restic backup ~` with sensible flags, then `restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --keep-yearly 3 --prune`. |
+| `~/.config/restic/env.example` | Template — copy to `env`, fill in `RESTIC_REPOSITORY`, `RESTIC_PASSWORD`, and backend creds (B2/S3). `chmod 0600` it. |
+| `~/.config/restic/excludes` | Exclude list — caches, build artefacts, cloud-sync dirs, Downloads/Movies/Music. |
+| `~/Library/LaunchAgents/com.skenmy.restic-backup.plist` (macOS) | Daily at 04:32 local. |
+| `~/.config/systemd/user/restic-backup.{service,timer}` (Linux) | Same schedule, with 30-min jitter for fleet rollouts. |
+
+**One-time setup per laptop:**
+
+```sh
+cp ~/.config/restic/env.example ~/.config/restic/env
+$EDITOR ~/.config/restic/env                 # fill in repo URL + password + creds
+chmod 0600 ~/.config/restic/env
+~/.local/bin/restic-backup                   # first run also runs `restic init`
+```
+
+Logs land in `~/.local/state/restic/last.log`. Run the worker ad-hoc any time to force a backup.
+
+> **Back the `RESTIC_PASSWORD` up in Bitwarden.** Losing it bricks your snapshots.
+
 ### Git
 - **`dot_gitconfig.tmpl`** — name/email/signingKey from chezmoi prompts. GPG sign commits and tags. **delta** as pager and interactive diff filter. `init.defaultBranch=main`, `pull.rebase=false`, `push.default=current` with `autoSetupRemote`, `fetch.prune`, `rebase.autoStash`+`autoSquash`, `rerere.enabled`, branches sorted by recent commit, `merge.conflictstyle=zdiff3`, `diff.algorithm=histogram`, `help.autocorrect=prompt`.
 - URL aliases: `gh:user/repo` → `git@github.com:user/repo`.

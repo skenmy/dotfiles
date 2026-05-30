@@ -74,6 +74,16 @@ if ! command -v fzf >/dev/null && [ ! -d "$HOME/.fzf" ]; then
     "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish
 fi
 
+# ---- restic ----
+# Most distros have a recent-enough restic; fall back to the official install.sh.
+if ! command -v restic >/dev/null; then
+    if command -v apt-get >/dev/null; then $SUDO apt-get install -y restic
+    elif command -v dnf  >/dev/null; then $SUDO dnf install -y restic
+    elif command -v pacman >/dev/null; then $SUDO pacman -S --noconfirm restic
+    elif command -v apk  >/dev/null; then $SUDO apk add --no-cache restic
+    fi
+fi
+
 # ---- Tailscale (personal devices only — work boxes use the employer install) ----
 {{- if not .work }}
 if ! command -v tailscale >/dev/null; then

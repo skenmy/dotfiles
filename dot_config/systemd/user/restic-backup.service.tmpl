@@ -1,0 +1,14 @@
+{{- if eq .chezmoi.os "linux" -}}
+[Unit]
+Description=Nightly restic backup of $HOME
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/restic-backup
+SuccessExitStatus=0
+# Restic can be I/O- and memory-heavy; lower its scheduling priority.
+Nice=10
+IOSchedulingClass=idle
+{{- end }}
