@@ -1,0 +1,14 @@
+{{- if eq .chezmoi.os "linux" -}}
+[Unit]
+Description=Daily restic backup
+Requires=restic-backup.service
+
+[Timer]
+OnCalendar=*-*-* 04:32:00
+RandomizedDelaySec=30min
+Persistent=true
+Unit=restic-backup.service
+
+[Install]
+WantedBy=timers.target
+{{- end }}

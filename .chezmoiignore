@@ -20,6 +20,7 @@ run_once_install-packages-windows.ps1
 .zsh_plugins.txt
 .tmux.conf
 .config/ghostty
+.config/restic
 {{- end }}
 {{- if default false .headless }}
 .config/ghostty

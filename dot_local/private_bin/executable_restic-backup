@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+#
+# Nightly restic backup of $HOME → remote repository.
+# Config lives at ~/.config/restic/env (gitignored — never tracked in dotfiles).
+# Required env vars:
+#     RESTIC_REPOSITORY=b2:my-bucket:prefix      (or s3:s3.amazonaws.com/bucket, sftp:..., …)
+#     RESTIC_PASSWORD=…                          (or RESTIC_PASSWORD_FILE=…)
+#     + backend-specific creds, e.g.:
+#         B2_ACCOUNT_ID, B2_ACCOUNT_KEY
+#         AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+#
+# Logs to ~/.local/state/restic/last.log. Always exits 0 so a transient
+# failure doesn't break the timer's bookkeeping; check the log to spot
+# drift.
+
+set -uo pipefail
+
+LOGDIR="${XDG_STATE_HOME:-$HOME/.local/state}/restic"
+LOG="$LOGDIR/last.log"
+mkdir -p "$LOGDIR"
+
+ts() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
+say() { printf "[%s] %s\n" "$(ts)" "$*" | tee -a "$LOG"; }
+
+HOST="$(hostname -s 2>/dev/null || hostname)"
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+
+ENV_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/restic/env"
+EXCLUDE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/restic/excludes"
+
+if [ ! -f "$ENV_FILE" ]; then
+    say "no $ENV_FILE — skipping backup. Create it (see ~/.config/restic/env.example) to enable."
+    exit 0
+fi
+# shellcheck disable=SC1090
+. "$ENV_FILE"
+: "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY not set in $ENV_FILE}"
+
+command -v restic >/dev/null || { say "restic not on PATH; aborting"; exit 0; }
+
+say "starting restic backup on $HOST → $RESTIC_REPOSITORY"
+
+# init repo if it's empty (first machine; subsequent machines skip — already exists)
+if ! restic snapshots --quiet --json >/dev/null 2>&1; then
+    say "repository looks empty — running restic init"
+    restic init >>"$LOG" 2>&1 || true
+fi
+
+excludes=()
+[ -f "$EXCLUDE_FILE" ] && excludes=(--exclude-file "$EXCLUDE_FILE")
+
+restic backup "$HOME" \
+    --tag "$HOST" \
+    --tag "daily" \
+    --one-file-system \
+    --exclude-caches \
+    "${excludes[@]}" \
+    --quiet \
+    >>"$LOG" 2>&1
+
+rc=$?
+[ "$rc" -ne 0 ] && say "restic backup exited $rc" && exit 0
+
+# Keep: 7 daily, 4 weekly, 12 monthly, 3 yearly snapshots per host.
+restic forget \
+    --tag "$HOST" \
+    --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --keep-yearly 3 \
+    --prune \
+    >>"$LOG" 2>&1 || true
+
+stats="$(restic snapshots --tag "$HOST" --json 2>/dev/null | jq -r 'length' 2>/dev/null || echo '?')"
+say "done; $stats snapshot(s) retained for $HOST"
+
+exit 0

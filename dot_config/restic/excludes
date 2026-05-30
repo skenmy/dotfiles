@@ -1,0 +1,49 @@
+# Paths excluded from `restic backup ~`. Lines starting with # are ignored.
+# Matches restic's pattern syntax: https://restic.readthedocs.io/en/stable/040_backup.html#excluding-files
+
+# Caches (regenerated automatically; never worth backing up)
+.cache
+Library/Caches
+Library/Application Support/Code/Cache*
+Library/Application Support/Code/CachedData
+Library/Application Support/Code/Service Worker
+Library/Application Support/Cursor/Cache*
+Library/Application Support/Firefox/Profiles/*/cache2
+Library/Application Support/Google/Chrome/*/Cache
+Library/Containers/*/Data/Library/Caches
+
+# Build artefacts
+node_modules
+.venv
+__pycache__
+*.pyc
+target
+build
+dist
+.next
+.turbo
+.parcel-cache
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.tox
+
+# Cloud / drive sync
+Library/CloudStorage
+Library/Mobile Documents
+Dropbox
+Google Drive
+
+# OS junk
+.DS_Store
+.Trash
+Library/Logs
+Library/Mail/V*/MailData/Envelope*
+*.tmp
+
+# Big stuff usually re-downloadable
+Downloads
+Movies
+Music
+
+# Anything matching `CACHEDIR.TAG` is auto-skipped via --exclude-caches in the script.

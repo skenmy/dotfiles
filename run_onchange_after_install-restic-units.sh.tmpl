@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# unit hash: {{ include "Library/LaunchAgents/com.skenmy.restic-backup.plist.tmpl" | sha256sum }}
+# unit hash: {{ include "dot_config/systemd/user/restic-backup.service.tmpl" | sha256sum }}
+# unit hash: {{ include "dot_config/systemd/user/restic-backup.timer.tmpl" | sha256sum }}
+# script hash: {{ include "dot_local/private_bin/executable_restic-backup" | sha256sum }}
+set -uo pipefail
+
+{{- if and (eq .chezmoi.os "darwin") (not .headless) }}
+PLIST="$HOME/Library/LaunchAgents/com.skenmy.restic-backup.plist"
+if [ -f "$PLIST" ]; then
+    echo "==> (re)loading $PLIST"
+    launchctl unload "$PLIST" 2>/dev/null || true
+    launchctl load "$PLIST"
+fi
+{{- end }}
+
+{{- if eq .chezmoi.os "linux" }}
+if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
+    echo "==> enabling restic-backup.timer (user)"
+    systemctl --user daemon-reload
+    systemctl --user enable --now restic-backup.timer
+fi
+{{- end }}
