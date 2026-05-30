@@ -47,10 +47,10 @@ Movies
 Music
 
 # ── iCloud-backed Apple apps ───────────────────────────────────────
-# iCloud Photos: if it's on, iCloud has the originals (verify in
-# System Settings → Apple ID → iCloud → Photos). Comment back in if
-# you ever turn iCloud Photos off.
-Pictures/Photos Library.photoslibrary
+# iCloud Photos: kept in the backup deliberately ("can't hurt" — and
+# you haven't confirmed iCloud sync state). Uncomment if you ever
+# verify iCloud Photos is on and want to reclaim the GBs.
+# Pictures/Photos Library.photoslibrary
 # Apple Notes: in CloudKit if iCloud Notes is on. Re-include if not.
 Library/Group Containers/group.com.apple.notes
 Library/Containers/com.apple.Notes
