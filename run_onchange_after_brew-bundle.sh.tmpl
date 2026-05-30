@@ -1,0 +1,15 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/usr/bin/env bash
+# Brewfile hash: {{ include "Brewfile" | sha256sum }}
+#
+# Re-runs `brew bundle` whenever Brewfile content changes — so adding
+# `brew "foo"` and pushing is enough to get foo installed on every box
+# on the next apply (chezmoi-update timer or manual `chezmoi apply`).
+set -uo pipefail
+
+command -v brew >/dev/null 2>&1 || { echo "brew not on PATH; skipping bundle"; exit 0; }
+
+echo "==> brew bundle (Brewfile changed)"
+brew bundle --file="$HOME/Brewfile" {{ if default false .headless }}--no-upgrade{{ end }} || \
+    echo "!! brew bundle reported errors; check 'brew bundle check --verbose' for details"
+{{- end }}
