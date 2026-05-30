@@ -1,32 +1,16 @@
 #!/usr/bin/env bash
 #
-# Pull latest dotfiles from github.com/skenmy/dotfiles, apply, and notify
-# via ntfy if anything actually changed.
+# Pull latest dotfiles from github.com/skenmy/dotfiles and apply.
 #
-# Invoked by launchd (macOS) or systemd user timer (Linux) — see
-# Library/LaunchAgents/ and .config/systemd/user/.
-#
-# Configurable via ~/.config/chezmoi-update/env (gitignored):
-#     NTFY_URL=https://notify.ts.skenmy.com/dotfiles
-#     NTFY_TOKEN=tk_xxx                # optional, used as Bearer
-#     NTFY_PRIORITY=3                  # 1=min, 3=default, 5=urgent
-#
-# Exit codes: always 0 (a failed update on one box shouldn't break the
-# timer's bookkeeping; check the log if you suspect drift).
+# Invoked by launchd (macOS) or systemd user timer (Linux). Logs go
+# under ~/.local/state/chezmoi-update/. Always exits 0 — a flaky
+# network shouldn't break the timer's bookkeeping.
 
 set -uo pipefail
 
 LOGDIR="${XDG_STATE_HOME:-$HOME/.local/state}/chezmoi-update"
 LOG="$LOGDIR/last.log"
 mkdir -p "$LOGDIR"
-
-ENV_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/chezmoi-update/env"
-# shellcheck disable=SC1090
-[ -f "$ENV_FILE" ] && . "$ENV_FILE"
-
-NTFY_URL="${NTFY_URL:-}"
-NTFY_TOKEN="${NTFY_TOKEN:-}"
-NTFY_PRIORITY="${NTFY_PRIORITY:-3}"
 
 ts() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
 say() { printf "[%s] %s\n" "$(ts)" "$*" | tee -a "$LOG"; }
@@ -42,43 +26,20 @@ say "starting chezmoi update on $HOST"
 SOURCE_DIR="$(chezmoi source-path 2>/dev/null || echo "$HOME/.local/share/chezmoi")"
 BEFORE_SHA="$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
 
-# `chezmoi update` does: git pull --rebase + chezmoi apply
 chezmoi update --force >>"$LOG" 2>&1
 rc=$?
 
 AFTER_SHA="$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
 
 if [ "$rc" -ne 0 ]; then
-    say "chezmoi update exited $rc — not notifying"
-    exit 0
-fi
-
-if [ "$BEFORE_SHA" = "$AFTER_SHA" ]; then
+    say "chezmoi update exited $rc — see $LOG"
+elif [ "$BEFORE_SHA" = "$AFTER_SHA" ]; then
     say "no changes (HEAD=$BEFORE_SHA)"
-    exit 0
-fi
-
-short() { printf '%s' "$1" | cut -c1-7; }
-summary="$(git -C "$SOURCE_DIR" log --pretty=format:'%h %s' "$BEFORE_SHA..$AFTER_SHA" 2>/dev/null | head -5)"
-title="dotfiles updated on $HOST"
-body="$(short "$BEFORE_SHA") → $(short "$AFTER_SHA")
-$summary"
-
-say "updated: $(short "$BEFORE_SHA") -> $(short "$AFTER_SHA")"
-
-if [ -n "$NTFY_URL" ]; then
-    auth=()
-    [ -n "$NTFY_TOKEN" ] && auth=(-H "Authorization: Bearer $NTFY_TOKEN")
-    curl -fsS -X POST "$NTFY_URL" \
-        -H "Title: $title" \
-        -H "Priority: $NTFY_PRIORITY" \
-        -H "Tags: arrow_double_up,whale" \
-        "${auth[@]}" \
-        -d "$body" >>"$LOG" 2>&1 \
-        && say "ntfy: posted to $NTFY_URL" \
-        || say "ntfy: post failed (non-fatal)"
 else
-    say "ntfy: NTFY_URL not set; skipping notification"
+    short() { printf '%s' "$1" | cut -c1-7; }
+    say "updated: $(short "$BEFORE_SHA") -> $(short "$AFTER_SHA")"
+    git -C "$SOURCE_DIR" log --pretty=format:'  %h %s' "$BEFORE_SHA..$AFTER_SHA" 2>/dev/null | tee -a "$LOG"
+    echo >>"$LOG"
 fi
 
 exit 0
