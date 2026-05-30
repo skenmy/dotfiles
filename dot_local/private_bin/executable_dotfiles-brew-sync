@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+#
+# Nightly: detect brews/casks installed locally that aren't in the
+# dotfiles Brewfile, append them, commit + push. Other boxes pick the
+# changes up via the daily chezmoi-update timer.
+#
+# Append-only by design:
+#   - New local install → propagates to every Mac tomorrow.
+#   - Local uninstall → does NOT remove from Brewfile (do that by hand in a PR).
+#
+# Per-host exceptions: drop one regex per line into
+#     ~/.config/dotfiles/brew-sync-ignore
+# Matched against the rendered Brewfile lines (e.g. `^cask "firefox"$`).
+#
+# Logs at ~/.local/state/dotfiles-brew-sync/last.log. Always exits 0.
+
+set -uo pipefail
+
+LOGDIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles-brew-sync"
+LOG="$LOGDIR/last.log"
+mkdir -p "$LOGDIR"
+
+ts() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
+say() { printf "[%s] %s\n" "$(ts)" "$*" | tee -a "$LOG"; }
+
+HOST="$(hostname -s 2>/dev/null || hostname)"
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+
+command -v brew    >/dev/null || { say "brew not on PATH; aborting"; exit 0; }
+command -v chezmoi >/dev/null || { say "chezmoi not on PATH; aborting"; exit 0; }
+
+SRC="$(chezmoi source-path 2>/dev/null || echo "$HOME/.local/share/chezmoi")"
+BREWFILE="$SRC/Brewfile"
+[ -f "$BREWFILE" ] || { say "no Brewfile at $BREWFILE; aborting"; exit 0; }
+
+TMP="$(mktemp)"
+trap 'rm -f "$TMP" "${TMP}.dump"' EXIT
+
+# 1. Dump current local brew state.
+brew bundle dump --force --no-vscode --no-restart --file="${TMP}.dump" 2>>"$LOG"
+
+# 2. Normalise both to just package lines (ignore comments / blanks / order).
+extract_pkgs() { grep -E '^(brew|cask|tap|mas) ' "$1" | sort -u; }
+existing="$(extract_pkgs "$BREWFILE")"
+current="$(extract_pkgs "${TMP}.dump")"
+
+# 3. Apply ignore list to the *current* state so ignored packages never
+#    look like drift.
+IGNORE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/brew-sync-ignore"
+if [ -f "$IGNORE_FILE" ]; then
+    current="$(printf '%s\n' "$current" | grep -E -v -f "$IGNORE_FILE" || true)"
+fi
+
+# 4. What's installed locally but not in the source Brewfile?
+new_lines="$(comm -23 <(printf '%s\n' "$current") <(printf '%s\n' "$existing"))"
+
+if [ -z "$new_lines" ]; then
+    say "no drift — Brewfile in sync with local brew state"
+    exit 0
+fi
+
+say "drift detected on $HOST — adding $(printf '%s\n' "$new_lines" | wc -l | tr -d ' ') line(s)"
+printf '%s\n' "$new_lines" | sed 's/^/    + /' | tee -a "$LOG"
+
+# 5. Append to Brewfile under a dated header.
+{
+    printf '\n# auto-synced from %s on %s\n' "$HOST" "$(date +%Y-%m-%d)"
+    printf '%s\n' "$new_lines"
+} >> "$BREWFILE"
+
+# 6. Commit and push. `pull --rebase --autostash` handles a race with
+#    another machine pushing at the same minute.
+cd "$SRC"
+git pull --rebase --autostash >>"$LOG" 2>&1 || { say "git pull failed — commit deferred to next run"; exit 0; }
+git add Brewfile
+git -c commit.gpgsign=false commit -m "brew-sync: $(printf '%s\n' "$new_lines" | wc -l | tr -d ' ') new package(s) from $HOST" >>"$LOG" 2>&1
+git push >>"$LOG" 2>&1 || { say "git push failed — local commit kept"; exit 0; }
+
+say "pushed Brewfile update"
+exit 0

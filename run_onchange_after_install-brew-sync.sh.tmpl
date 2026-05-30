@@ -1,0 +1,13 @@
+{{- if and (eq .chezmoi.os "darwin") (not .headless) -}}
+#!/usr/bin/env bash
+# unit hash: {{ include "Library/LaunchAgents/com.skenmy.dotfiles-brew-sync.plist.tmpl" | sha256sum }}
+# script hash: {{ include "dot_local/private_bin/executable_dotfiles-brew-sync" | sha256sum }}
+set -uo pipefail
+
+PLIST="$HOME/Library/LaunchAgents/com.skenmy.dotfiles-brew-sync.plist"
+if [ -f "$PLIST" ]; then
+    echo "==> (re)loading $PLIST"
+    launchctl unload "$PLIST" 2>/dev/null || true
+    launchctl load "$PLIST"
+fi
+{{- end }}
