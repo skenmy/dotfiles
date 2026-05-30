@@ -6,6 +6,66 @@ One source of truth → applied identically to every MacBook, Windows PC, and Li
 
 ---
 
+## TL;DR
+
+### Fresh box (one command)
+
+```sh
+# macOS / Linux — full bootstrap: chezmoi, packages, bw unlock, GPG + SSH + atuin from Bitwarden
+curl -fsSL https://raw.githubusercontent.com/skenmy/dotfiles/main/scripts/bootstrap.sh | bash
+```
+
+```powershell
+# Windows — chezmoi only (no Bitwarden integration yet)
+iex "&{$(irm 'https://get.chezmoi.io/ps1')} -b $HOME/.local/bin init --apply skenmy"
+```
+
+### Day-to-day
+
+```sh
+chezmoi edit ~/.zshrc                                  # open the source template
+chezmoi diff                                           # preview pending changes
+chezmoi apply                                          # apply to $HOME
+cd "$(chezmoi source-path)" && git add -A \
+    && git commit -m "tweak zshrc" && git push         # roll out to all boxes (auto-update timer picks it up)
+chezmoi update                                         # manual pull + apply (don't wait for the timer)
+```
+
+### Add a brand-new file to dotfiles
+
+```sh
+chezmoi add ~/.config/foo/bar.conf                     # static
+chezmoi add --template ~/.config/foo/bar.conf          # template (edit to add {{ . }})
+cd "$(chezmoi source-path)" && git add -A \
+    && git commit -m "add foo config" && git push
+```
+
+### One-time setup
+
+```sh
+# Seed Bitwarden with atuin / GPG / SSH secrets (run on the machine that has them all)
+~/.local/share/chezmoi/scripts/seed-bitwarden.sh
+
+# macOS: store the bw master pw in Keychain so Touch ID unlocks the vault
+security add-generic-password -T '' -s bw-master -a "$USER" -w
+
+# Linux server: let the daily auto-update timer fire without a logged-in session
+sudo loginctl enable-linger "$USER"
+```
+
+### Troubleshooting
+
+```sh
+chezmoi data                              # show resolved template variables
+chezmoi managed                           # list every file chezmoi controls
+chezmoi unmanaged                         # files in $HOME not under chezmoi
+chezmoi status                            # like `git status` for the apply state
+tail ~/.local/state/chezmoi-update/last.log   # see what the daily timer did
+~/.local/bin/chezmoi-update-and-notify    # fire the timer immediately
+```
+
+---
+
 ## Quick start
 
 ### Just dotfiles + packages (one command)
