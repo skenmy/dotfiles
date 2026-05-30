@@ -33,7 +33,9 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 0
 fi
 # shellcheck disable=SC1090
-. "$ENV_FILE"
+# `set -a` exports every variable assigned while it's on, so restic and
+# the B2 backend actually see RESTIC_*, B2_*, AWS_* etc. in their env.
+set -a; . "$ENV_FILE"; set +a
 : "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY not set in $ENV_FILE}"
 
 command -v restic >/dev/null || { say "restic not on PATH; aborting"; exit 0; }
