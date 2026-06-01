@@ -40,6 +40,16 @@ warn() { printf "%s !!%s %s\n" "$c_red"   "$c_reset" "$*" >&2; }
 die()  { warn "$*"; exit 1; }
 has()  { command -v "$1" >/dev/null 2>&1; }
 
+# Run a command with the controlling terminal as its stdin. When this script is
+# piped in (curl … | bash), the script's own stdin is the pipe carrying the
+# script text — already at EOF — so any interactive prompt (bw login/unlock,
+# chezmoi's promptString) reads from a dead fd and crashes. Routing stdin to
+# /dev/tty lets those prompts talk to the human. Falls back to the inherited
+# stdin when no terminal is available (e.g. CI), so behaviour is unchanged there.
+tty_in() {
+    if { : < /dev/tty; } 2>/dev/null; then "$@" < /dev/tty; else "$@"; fi
+}
+
 # detect OS up front
 case "$(uname -s)" in
     Darwin) OS=darwin ;;
@@ -94,7 +104,7 @@ unlock_bw() {
 
     if [ "$status" = "unauthenticated" ]; then
         log "Logging in to Bitwarden (interactive)…"
-        bw login || die "bw login failed"
+        tty_in bw login || die "bw login failed"
     fi
 
     # Already unlocked?
@@ -112,7 +122,7 @@ unlock_bw() {
         unset pw
     else
         log "Unlocking Bitwarden (master password prompt)…"
-        BW_SESSION="$(bw unlock --raw)" || die "bw unlock failed"
+        BW_SESSION="$(tty_in bw unlock --raw)" || die "bw unlock failed"
     fi
     export BW_SESSION
     ok "Bitwarden unlocked"
@@ -181,7 +191,7 @@ run_chezmoi() {
         chezmoi apply --force
     else
         log "Running chezmoi init --apply for github.com/$GITHUB_USER/dotfiles…"
-        chezmoi init --apply "$GITHUB_USER"
+        tty_in chezmoi init --apply "$GITHUB_USER"
     fi
     ok "chezmoi applied"
 }
