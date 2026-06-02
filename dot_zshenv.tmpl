@@ -19,3 +19,9 @@ export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 
 # GPG (so signing prompts attach to current TTY)
 export GPG_TTY=$(tty)
+
+# zoxide: silence the "initialized at the end" doctor warning. It's a false
+# positive in non-interactive/tooling shells (e.g. Claude Code's Bash tool)
+# that cd into the working dir out-of-band, after zoxide's hook is set up.
+# zoxide is genuinely last in .zshrc, so the check adds only noise.
+export _ZO_DOCTOR=0
