@@ -66,3 +66,28 @@ cask "tailscale"
 # Fonts (Nerd Fonts for icons in starship/eza/etc.)
 cask "font-jetbrains-mono-nerd-font"
 cask "font-symbols-only-nerd-font"
+
+# auto-synced from Pauls-MacBook-Pro-9 on 2026-05-31
+brew "bitwarden-cli"
+brew "chezmoi"
+brew "k9s"
+brew "mkcert"
+brew "pre-commit"
+brew "restic"
+brew "tealdeer"
+brew "xh"
+cask "battle-net"
+cask "openclaw"
+cask "tailscale-app"
+tap "fluxcd/tap"
+
+# auto-synced from Mac on 2026-06-02
+brew "cmake"
+brew "dfu-util"
+brew "messense/macos-cross-toolchains/aarch64-unknown-linux-gnu"
+brew "ninja"
+brew "python@3.14"
+tap "messense/macos-cross-toolchains"
+
+# auto-synced from Mac on 2026-06-13
+cask "claude-code@latest"
