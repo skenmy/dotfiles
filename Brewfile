@@ -91,3 +91,6 @@ tap "messense/macos-cross-toolchains"
 
 # auto-synced from Mac on 2026-06-13
 cask "claude-code@latest"
+
+# auto-synced from Mac on 2026-06-20
+cask "wireshark-app"
