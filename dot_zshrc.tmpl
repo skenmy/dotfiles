@@ -16,7 +16,12 @@ setopt COMPLETE_IN_WORD ALWAYS_TO_END
 autoload -Uz compinit
 ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
 mkdir -p "$(dirname "$ZSH_COMPDUMP")"
-compinit -d "$ZSH_COMPDUMP"
+# Skip the slow completion security audit when the dump is fresh (<24h old).
+if [[ -n ${ZSH_COMPDUMP}(#qNmh-24) ]]; then
+    compinit -C -d "$ZSH_COMPDUMP"
+else
+    compinit -d "$ZSH_COMPDUMP"
+fi
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
@@ -34,27 +39,44 @@ if [ -f "$ANTIDOTE_HOME/antidote.zsh" ]; then
     antidote load "$HOME/.zsh_plugins.txt"
 fi
 
+# ---- eval/init cache ----
+# The tools below print a STATIC init script; spawning each binary on every
+# shell start cost ~1.5s. Cache the generated script and source that instead,
+# regenerating only when the binary (or this .zshrc) is newer than the cache.
+_ZSH_EVALCACHE_DIR="$XDG_CACHE_HOME/zsh/evalcache"
+_evalcache() {
+    local cmd="$1" bin="${commands[$1]}"
+    [[ -n "$bin" ]] || return 0
+    local key="${(j::)@}"; key="${key//[^[:alnum:]]/_}"
+    local cache="$_ZSH_EVALCACHE_DIR/$key.zsh"
+    if [[ ! -s "$cache" || "$bin" -nt "$cache" || ${ZDOTDIR:-$HOME}/.zshrc -nt "$cache" ]]; then
+        mkdir -p "$_ZSH_EVALCACHE_DIR"
+        "$@" >| "$cache" 2>/dev/null
+    fi
+    source "$cache"
+}
+
 # ---- Starship prompt ----
-command -v starship >/dev/null && eval "$(starship init zsh)"
+_evalcache starship init zsh
 
 # ---- Tooling: mise (runtime versions) ----
-command -v mise >/dev/null && eval "$(mise activate zsh)"
+_evalcache mise activate zsh
 
 # ---- Tooling: fzf (fuzzy finder) ----
 if command -v fzf >/dev/null; then
-    source <(fzf --zsh) 2>/dev/null || true
+    _evalcache fzf --zsh
     export FZF_DEFAULT_OPTS="--height=50% --layout=reverse --border --info=inline"
     command -v fd >/dev/null && export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 fi
 
 # ---- Tooling: atuin (history sync) ----
-command -v atuin >/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
+_evalcache atuin init zsh --disable-up-arrow
 
 # ---- Tooling: direnv ----
-command -v direnv >/dev/null && eval "$(direnv hook zsh)"
+_evalcache direnv hook zsh
 
 # ---- Tooling: gh (completion) ----
-command -v gh >/dev/null && eval "$(gh completion -s zsh)"
+_evalcache gh completion -s zsh
 
 # ---- Aliases ----
 if command -v eza >/dev/null; then
@@ -127,14 +149,14 @@ export ANDROID_HOME="$HOME/Library/Android/sdk"
     export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"
 
 # flux completion
-command -v flux >/dev/null && . <(flux completion zsh)
+_evalcache flux completion zsh
 
 # iTerm2 shell integration (works in Ghostty too)
 test -e "$HOME/.iterm2_shell_integration.zsh" && source "$HOME/.iterm2_shell_integration.zsh"
 {{- end }}
 
 # ---- zoxide (must be last — needs the final PATH) ----
-command -v zoxide >/dev/null && eval "$(zoxide init zsh --cmd cd)"
+_evalcache zoxide init zsh --cmd cd
 
 # ---- Random tip on every new interactive shell ----
 # Pick a random non-comment, non-blank line from ~/.config/dotfiles/tips.
