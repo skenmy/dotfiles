@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Rebuild ~/.ssh/allowed_signers so SSH-signed commits/tags verify locally.
+# Re-fires whenever the rendered values below change (email / work flag).
+#   email={{ .email }} work={{ .work }}
+set -euo pipefail
+
+out="$HOME/.ssh/allowed_signers"
+tmp="$(mktemp)"
+
+personal_key="$HOME/.ssh/{{ if .work }}id_ed25519_skenmy{{ else }}id_ed25519{{ end }}.pub"
+if [ -f "$personal_key" ]; then
+    printf '%s %s\n' "{{ .email }}" "$(awk '{print $1, $2}' "$personal_key")" >> "$tmp"
+fi
+{{- if .work }}
+eit_key="$HOME/.ssh/id_ed25519_eit.pub"
+if [ -f "$eit_key" ]; then
+    printf 'pwilliams@eit.org %s\n' "$(awk '{print $1, $2}' "$eit_key")" >> "$tmp"
+fi
+{{- end }}
+
+mkdir -p "$HOME/.ssh"
+mv "$tmp" "$out"
+chmod 644 "$out"

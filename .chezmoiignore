@@ -28,6 +28,11 @@ run_once_install-packages-windows.ps1
 Library/Application Support/Code
 {{- end }}
 
+{{- if not .work }}
+.gitconfig-eit
+.git-hooks
+{{- end }}
+
 README.md
 CLAUDE.md
 gpg-public-key.asc

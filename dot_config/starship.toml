@@ -16,6 +16,9 @@ $time\
 [ ](fg:color_bg1)\
 $line_break$character"""
 
+# Identity pill sits on the right, leaving the left powerline chain untouched.
+right_format = "$custom"
+
 palette = "gruvbox_dark"
 
 [palettes.gruvbox_dark]
@@ -135,3 +138,21 @@ disabled = false
 success_symbol = '[❯](bold fg:color_green)'
 error_symbol = '[❯](bold fg:color_red)'
 vimcmd_symbol = '[❮](bold fg:color_green)'
+
+# ---- Git identity pills (gated on resolved commit email, gruvbox-matched) ----
+# Mutually exclusive: only the email git will actually commit as shows a pill.
+# On personal machines only the skenmy pill can appear; the EIT pill needs the
+# ~/code/eit identity, which exists on work machines only.
+[custom.id_eit]
+description = "Show EIT identity inside a repo resolving to the EMU email"
+when = '[ "$(git config user.email 2>/dev/null)" = "pwilliams@eit.org" ]'
+command = "echo EIT"
+shell = ["bash", "--noprofile", "--norc"]
+format = "[](fg:color_orange)[  $output ](fg:color_fg0 bg:color_orange)[](fg:color_orange)"
+
+[custom.id_personal]
+description = "Show personal identity inside a repo resolving to the personal email"
+when = '[ "$(git config user.email 2>/dev/null)" = "paul@skenmy.com" ]'
+command = "echo skenmy"
+shell = ["bash", "--noprofile", "--norc"]
+format = "[](fg:color_blue)[  $output ](fg:color_fg0 bg:color_blue)[](fg:color_blue)"

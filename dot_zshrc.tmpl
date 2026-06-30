@@ -86,6 +86,14 @@ alias myip='curl -s ifconfig.me'
 alias serve='python3 -m http.server'
 alias dco='docker compose'
 alias dps='docker ps --format "table {{ "{{" }}.Names{{ "}}" }}\t{{ "{{" }}.Image{{ "}}" }}\t{{ "{{" }}.Status{{ "}}" }}"'
+{{- if .work }}
+
+# Clone an EIT org repo as the EMU into the eit tree
+# usage: eitclone your-org/some-repo
+eitclone() {
+    git clone "git@github-eit:$1" "${HOME}/code/eit/${1##*/}"
+}
+{{- end }}
 
 # ---- Key bindings ----
 bindkey -e
