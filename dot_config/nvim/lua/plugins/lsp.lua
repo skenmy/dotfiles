@@ -8,9 +8,15 @@ return {
         },
         config = function()
             local servers = { "lua_ls", "gopls", "rust_analyzer", "pyright", "ts_ls", "yamlls", "jsonls", "bashls", "terraformls" }
+            -- mason-lspconfig v2 auto-enables installed servers via vim.lsp.enable().
+            -- Configs are sourced from nvim-lspconfig's lsp/*.lua on the runtimepath.
+            -- For per-server overrides: vim.lsp.config("lua_ls", { settings = {...} })
             require("mason-lspconfig").setup({ ensure_installed = servers })
-            local lspconfig = require("lspconfig")
-            for _, s in ipairs(servers) do lspconfig[s].setup({}) end
+
+            -- Advertise nvim-cmp's completion capabilities to every server.
+            vim.lsp.config("*", {
+                capabilities = require("cmp_nvim_lsp").default_capabilities(),
+            })
 
             vim.api.nvim_create_autocmd("LspAttach", {
                 callback = function(ev)
