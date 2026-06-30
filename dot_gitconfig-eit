@@ -1,0 +1,3 @@
+[user]
+    email = pwilliams@eit.org
+    signingkey = ~/.ssh/id_ed25519_eit.pub

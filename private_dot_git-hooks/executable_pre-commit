@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Assert commit identity matches directory tree (work machines only).
+# EIT commits can only happen inside ~/code/eit; the EIT identity can't be used
+# anywhere else. Belt-and-braces local attribution check.
+expected_eit="pwilliams@eit.org"
+email=$(git config user.email)
+toplevel=$(git rev-parse --show-toplevel 2>/dev/null)
+
+case "$toplevel" in
+  "$HOME/code/eit"/*)
+    if [ "$email" != "$expected_eit" ]; then
+      echo "✗ commit blocked: EIT tree but identity is '$email' (expected $expected_eit)" >&2
+      exit 1
+    fi ;;
+  *)
+    if [ "$email" = "$expected_eit" ]; then
+      echo "✗ commit blocked: EIT identity used outside ~/code/eit/" >&2
+      exit 1
+    fi ;;
+esac

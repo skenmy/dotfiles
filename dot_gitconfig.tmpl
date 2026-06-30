@@ -2,7 +2,7 @@
     name = {{ .name }}
     email = {{ .email }}
 {{- if .signingKey }}
-    signingkey = {{ .signingKey }}
+    signingkey = ~/.ssh/{{ if .work }}id_ed25519_skenmy{{ else }}id_ed25519{{ end }}.pub
 {{- end }}
 
 {{- if .signingKey }}
@@ -14,11 +14,10 @@
     gpgsign = true
 
 [gpg]
-{{- if eq .chezmoi.os "darwin" }}
-    program = /opt/homebrew/bin/gpg
-{{- else }}
-    program = gpg
-{{- end }}
+    format = ssh
+
+[gpg "ssh"]
+    allowedSignersFile = ~/.ssh/allowed_signers
 {{- end }}
 
 [init]
@@ -29,6 +28,9 @@
     autocrlf = input
     pager = delta
     excludesfile = ~/.gitignore_global
+{{- if .work }}
+    hooksPath = ~/.git-hooks
+{{- end }}
 
 [interactive]
     diffFilter = delta --color-only
@@ -83,6 +85,7 @@
     insteadOf = "me:"
 
 [alias]
+    whoami = config user.email
     s = status -sb
     co = checkout
     sw = switch
@@ -106,3 +109,10 @@
 
 [color]
     ui = auto
+{{- if .work }}
+
+# EIT EMU identity for the ~/code/eit tree (work machines only).
+# Overrides only email + signing key; everything else inherits from above.
+[includeIf "gitdir:~/code/eit/"]
+    path = ~/.gitconfig-eit
+{{- end }}

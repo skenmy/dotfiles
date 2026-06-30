@@ -1,5 +1,8 @@
 # ~/.ssh/config — sensible defaults across all hosts
 
+# Local per-host overrides, included FIRST so they win (ssh is first-match-wins).
+Include ~/.ssh/config.local
+
 Host *
     AddKeysToAgent yes
     ServerAliveInterval 60
@@ -36,6 +39,17 @@ Host github.com gh
     HostName github.com
     User git
     PreferredAuthentications publickey
+{{- if .work }}
+    # Work: pin the personal account to its on-disk key, bypassing the agent.
+    # IdentitiesOnly excludes the agent's keys, so auth uses exactly this key.
+    IdentityFile ~/.ssh/id_ed25519_skenmy
+    IdentitiesOnly yes
 
-# Per-host local overrides (kept out of dotfiles)
-Include ~/.ssh/config.local
+# EIT EMU — same github.com, different on-disk key. Use via git@github-eit:org/repo
+# for the ~/code/eit tree (see eitclone()).
+Host github-eit
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_eit
+    IdentitiesOnly yes
+{{- end }}

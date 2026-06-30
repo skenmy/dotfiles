@@ -62,9 +62,9 @@ Stored at `~/.config/chezmoi/chezmoi.toml`; prompted on first run, edit later wi
 |---|---|
 | `name` | `git user.name` |
 | `email` | `git user.email` |
-| `signingKey` | `git user.signingkey` (empty disables signing) |
+| `signingKey` | Signing **on/off flag** (empty disables signing). Signing is SSH-based; the real key is the on-disk SSH key (`id_ed25519_skenmy.pub` on work, `id_ed25519.pub` otherwise), not this value. |
 | `headless` | Skip GUI configs (Ghostty), skip macOS defaults, `brew bundle --no-upgrade` |
-| `work` | Personal vs employer-issued. Gates Tailscale install on Linux. Reserved for `IdentityAgent` branching too (1Password on work, Bitwarden on personal) |
+| `work` | Personal vs employer-issued. Gates Tailscale install on Linux, the `IdentityAgent` branching (1Password on work, Bitwarden on personal), and the **EIT EMU two-account setup**: `~/code/eit` identity (`.gitconfig-eit`), the `github-eit` ssh alias + on-disk GitHub key pinning, the `eitclone` helper, and the `~/.git-hooks` commit-identity guard. |
 
 ## Secrets
 
@@ -90,7 +90,7 @@ You **can**:
 You **cannot** (without explicit human approval):
 - Edit `~/.zshrc`, `~/.gitconfig`, `~/.ssh/config`, etc. **directly on a target machine** — the next `chezmoi apply` overwrites those. Always edit the source.
 - Force-push to `main` of `skenmy/dotfiles`. Open a PR.
-- Disable GPG signing in `dot_gitconfig.tmpl` even if it's annoying in CI — it's a deliberate hard rule.
+- Disable commit/tag signing in `dot_gitconfig.tmpl` — it's a deliberate hard rule. Signing is **SSH-based** as of 2026-06-30 (`gpg.format = ssh`; signing key is the on-disk `~/.ssh/id_ed25519_skenmy.pub` on work / `id_ed25519.pub` elsewhere; verified via `~/.ssh/allowed_signers`, rebuilt by `run_onchange_after_build-allowed-signers.sh.tmpl`). Do **not** revert it to GPG and do **not** turn signing off. (The GPG key is still imported for non-git use.)
 
 ## Smoke test after any edit
 
