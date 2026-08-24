@@ -100,3 +100,6 @@ brew "exiftool"
 # auto-synced from Pauls-MacBook-Pro-9 on 2026-08-06
 brew "whisper-cpp"
 brew "yt-dlp"
+
+# auto-synced from Mac on 2026-08-24
+brew "powershell"
