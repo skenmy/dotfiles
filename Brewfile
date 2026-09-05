@@ -103,3 +103,6 @@ brew "yt-dlp"
 
 # auto-synced from Mac on 2026-08-24
 brew "powershell"
+
+# auto-synced from Mac on 2026-09-05
+brew "ollama"
