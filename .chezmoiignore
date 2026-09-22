@@ -37,3 +37,8 @@ README.md
 CLAUDE.md
 gpg-public-key.asc
 scripts
+
+{{/* Docs site sources — published to GitHub Pages, never deployed to $HOME */}}
+docs
+mkdocs.yml
+site

@@ -4,6 +4,9 @@ Cross-platform dotfiles for **macOS, Linux, and Windows**, managed by [chezmoi](
 
 One source of truth → applied identically to every MacBook, Windows PC, and Linux server I touch.
 
+> **Audit site:** what every profile installs and changes, known gaps, and how to change things —
+> <https://skenmy.github.io/dotfiles/> (built from `docs/` + `scripts/docsgen` by the `docs` workflow).
+
 ---
 
 ## TL;DR — what to run on a fresh box
