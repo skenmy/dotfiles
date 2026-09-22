@@ -17,3 +17,8 @@
 
 [diff]
     pager = "delta --paging=never"
+
+[gitHub]
+    # Cache gitHubKeys (authorized_keys) so an offline apply does not fail
+    # and the unauthenticated API limit is not hit nightly.
+    refreshPeriod = "168h"

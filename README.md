@@ -95,7 +95,7 @@ curl -fsSL https://raw.githubusercontent.com/skenmy/dotfiles/main/scripts/bootst
 - Installs Bitwarden CLI (`bw`) if missing.
 - Unlocks the vault — Touch ID via macOS Keychain if the entry `bw-master` exists, otherwise prompts for master password.
 - Pulls **GPG private key** from `gpg/9BFD73704EA02674`, imports it + sets ultimate trust.
-- Pulls **SSH private key** from `ssh/personal/id_ed25519`, writes to `~/.ssh/` with 0600.
+- Pulls **SSH private key** from `ssh/personal/id_ed25519`, writes it with 0600 to `~/.ssh/id_ed25519` (personal) or `~/.ssh/id_ed25519_skenmy` (work boxes, after `chezmoi init` has recorded the flag). The EIT key is a manual copy from 1Password.
 - Stashes **atuin password + encryption key** from `atuin/skenmy.com`, runs `atuin login -u skenmy -p … -k …` after chezmoi has installed atuin, then `atuin import auto && atuin sync -f`.
 
 The schema is whatever `scripts/seed-bitwarden.sh` puts in the vault (see below). All steps are idempotent — re-running is safe.
@@ -269,7 +269,7 @@ Logs land in `~/.local/state/restic/last.log`. Run the worker ad-hoc any time to
 - **`dot_gitignore_global`** — DS_Store, swap files, .direnv, node_modules, .venv, .env.local, etc.
 
 ### SSH + GPG public keys
-- **`private_dot_ssh/authorized_keys.tmpl`** — applied to `~/.ssh/authorized_keys` (0600 via `private_` prefix). Pulled live from `github.com/skenmy.keys` via chezmoi's `gitHubKeys` template function — add a key on GitHub and the next `chezmoi apply` ships it everywhere. Per-host extras can go in `~/.ssh/authorized_keys.local` (sourced if present).
+- **`private_dot_ssh/authorized_keys.tmpl`** — applied to `~/.ssh/authorized_keys` (0600 via `private_` prefix) on **personal** boxes only (unmanaged on `work=true`). Pulled from `github.com/skenmy.keys` via chezmoi's `gitHubKeys` template function, cached for a week (`gitHub.refreshPeriod`) — add a key on GitHub and it ships within a week, or immediately with `chezmoi apply --refresh-externals`. Per-host extras can go in `~/.ssh/authorized_keys.local` (sourced if present).
 - **`private_dot_ssh/id_rsa.pub`** — public counterpart of the RSA key. Safe to commit.
 - **`private_dot_ssh/config.tmpl`** — `AddKeysToAgent`, control sockets, `accept-new` host key policy, includes `~/.ssh/config.local` for per-host overrides. On macOS, uses Keychain + 1Password SSH agent socket.
 - **`gpg-public-key.asc`** — ASCII-armored export of GPG key `9BFD73704EA02674`. Not deployed as a file; instead `run_onchange_after_import-gpg-key.sh.tmpl` runs `gpg --import` on apply and marks the key as ultimately trusted so signing works out of the box.

@@ -31,7 +31,8 @@ Change any of them later with `chezmoi edit-config` then `chezmoi apply`.
 | **Tailscale** | `tailscale-app` cask, personal only | same (personal) | `install.sh` unless `work` | same | – |
 | **Bitwarden bootstrap** (`scripts/bootstrap.sh`) | ✓ | ✓ | ✓ | ✓ | **none** |
 | **git config** | ✓ SSH signing | ✓ | ✓ | ✓ | ✓ but signing key never provisioned |
-| **ssh config + authorized_keys** | ✓ | ✓ | ✓ | ✓ | ✓ (`ControlMaster` unsupported) |
+| **ssh config** | ✓ | ✓ | ✓ | ✓ | ✓ (`ControlMaster` unsupported) |
+| **authorized_keys from GitHub** | personal only | personal only | personal only | personal only | personal only |
 | **gpg public key import** | ✓ | ✓ | ✓ | ✓ | runs via `sh` if Git for Windows is present |
 | **`gh dash` extension** | ✓ once `gh` is authed | ✓ | ✓ | ✓ | same |
 | **tealdeer cache refresh** | ✓ | ✓ | ✓ | ✓ | same |
@@ -51,7 +52,9 @@ Applies on every OS unless stated.
 | SSH agent (Linux) | `~/.bitwarden-ssh-agent.sock` | `~/.1password/agent.sock` |
 | `Host github.com` | agent decides | pinned to `~/.ssh/id_ed25519_skenmy`, `IdentitiesOnly yes` |
 | `Host github-eit` | absent | pinned to `~/.ssh/id_ed25519_eit`; `eitclone org/repo` zsh helper clones into `~/code/eit/` |
-| `allowed_signers` | personal key only | personal key + EIT key (`pwilliams@eit.org`) |
+| `allowed_signers` | personal key only | personal key + EIT key (`workEmail`) |
+| `~/.ssh/authorized_keys` | managed from GitHub keys | **unmanaged** (left as the employer set it) |
+| Bootstrap SSH key filename | `~/.ssh/id_ed25519` | `~/.ssh/id_ed25519_skenmy` (+ manual `id_ed25519_eit`) |
 | Tailscale on Linux | installed by `install.sh` | skipped (employer-managed) |
 | Tailscale on macOS | `tailscale-app` cask | not installed |
 | Starship prompt | identity pill shows `skenmy` or `EIT` based on the resolved commit email | same |

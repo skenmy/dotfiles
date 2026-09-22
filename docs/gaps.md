@@ -15,8 +15,8 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-04](#g-04) | High | macOS | brew-sync re-appends commented lines; 6 duplicates, two cask-name pairs | **fixed** — name-based diff, Brewfile deduped |
 | [G-05](#g-05) | High | Windows | No auto-update, no bootstrap, signing key never provisioned, nvim config in wrong place | open |
 | [G-06](#g-06) | Medium | Linux (Arch, Alpine) | Debian package names break pacman/apk; dead headless branch | **fixed** — per-manager names; headless branch now gates Zed + font |
-| [G-07](#g-07) | Medium | all | `authorized_keys` needs GitHub at every apply; personal keys land on work boxes | open |
-| [G-08](#g-08) | Medium | work | Work profile expects `id_ed25519_skenmy` / `_eit`; bootstrap writes `id_ed25519` | open |
+| [G-07](#g-07) | Medium | all | `authorized_keys` needs GitHub at every apply; personal keys land on work boxes | **fixed** — unmanaged on work; 168h API cache |
+| [G-08](#g-08) | Medium | work | Work profile expects `id_ed25519_skenmy` / `_eit`; bootstrap writes `id_ed25519` | **fixed** — bootstrap names the key by the work flag |
 | [G-09](#g-09) | Medium | macOS headless | No restic backup on headless Macs — intentional? | decision needed |
 | [G-10](#g-10) | Medium | docs | README drift (GPG vs SSH signing, themes, age, agents) | open |
 | [G-11](#g-11) | Medium | macOS desktop | VS Code settings hard-code `/Users/paul` | **fixed** — VS Code management removed; Zed replaces it |
@@ -24,11 +24,11 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-13](#g-13) | Low | all | Neovim `<C-j>`/`<C-k>` mapped twice | open |
 | [G-14](#g-14) | Low | all | pre-commit defaults pin 2024 revisions | open |
 | [G-15](#g-15) | Low | Windows | Four bash `run_onchange` scripts have no OS guard | open |
-| [G-16](#g-16) | Low | all | Identity emails hard-coded in four places | open |
+| [G-16](#g-16) | Low | all | Identity emails hard-coded in four places | **fixed** — `.chezmoidata/identity.toml` |
 | [G-17](#g-17) | Low | Linux desktop | tmux copy assumes `pbcopy`/`xclip`; no Wayland; no Nerd Font installed | **fixed** — `wl-copy` fallback; JetBrainsMono Nerd Font installed on desktops |
 | [G-18](#g-18) | Low | macOS | brew-sync commits unsigned, straight to `main` | **fixed** — commits are signed; unsigned fallback removed |
 | [G-19](#g-19) | Low | Linux | `chsh` to zsh is manual | **fixed** — installer runs `chsh` when interactive |
-| [G-20](#g-20) | Low | all | `me:` URL shortcut renders to `paulwilliams/`, not `skenmy/` | open |
+| [G-20](#g-20) | Low | all | `me:` URL shortcut renders to `paulwilliams/`, not `skenmy/` | **fixed** — uses `githubUser` |
 
 ---
 
@@ -137,8 +137,7 @@ has no `|| true` under `set -e`, so the run_once aborts on Alpine. The `{{ if no
 outage the whole apply fails (template error), not just this file. Unauthenticated API calls are limited
 to 60/hour per IP. Separately, the personal GitHub keys become login-authorised on **work** machines.
 
-**Fix.** Gate with `{{ if not .work }}`; set `gitHub.refreshPeriod` in `.chezmoi.toml.tmpl` (chezmoi caches
-`gitHubKeys` responses when a refresh period is set); consider a `GITHUB_TOKEN` for the rate limit.
+**Fixed.** `.ssh/authorized_keys` is listed in `.chezmoiignore` under `{{ if .work }}`, so chezmoi stops managing it on employer machines without touching whatever is there. `.chezmoi.toml.tmpl` sets `gitHub.refreshPeriod = "168h"` so `gitHubKeys` is served from cache between weekly refreshes; **existing boxes only pick that up after `chezmoi init`** (re-renders the config, keeps prompt answers). Remaining risk: a brand-new personal box with no cache and no network still fails its first apply, which is acceptable.
 
 ## G-08 — Work profile key names vs bootstrap {#g-08}
 
@@ -147,8 +146,7 @@ to 60/hour per IP. Separately, the personal GitHub keys become login-authorised 
 `~/.ssh/id_ed25519` (`SSH_ITEM=ssh/personal/id_ed25519`, name taken from the item). Nothing provisions
 the EIT key or documents how to.
 
-**Fix.** In `install_ssh`, read `work` from `chezmoi data` (or a `--work` flag) and write to
-`id_ed25519_skenmy` when set; add a README/how-to step for placing `id_ed25519_eit` from 1Password.
+**Fixed.** `bootstrap.sh` now runs `chezmoi init --apply` first, then `install_ssh` reads `work` from `chezmoi data` and writes `~/.ssh/id_ed25519_skenmy` on work boxes (`id_ed25519` otherwise), prints a reminder to place the EIT key from 1Password, and runs `chezmoi apply` again so `build-allowed-signers` (whose hash now includes whether the key files exist) rebuilds `allowed_signers`.
 
 ## G-09 — Headless Macs have no backup {#g-09}
 
@@ -197,9 +195,7 @@ apply errors. Wrap each in `{{ if ne .chezmoi.os "windows" }}`.
 
 ## G-16 — Identity emails hard-coded {#g-16}
 
-`pwilliams@eit.org` appears in `build-allowed-signers`, the git hook, `dot_gitconfig-eit` and
-`starship.toml`; `paul@skenmy.com` in `starship.toml` and as a prompt default. One `eitEmail` value in
-`.chezmoi.toml.tmpl` `[data]` would let every template reference it.
+**Fixed.** `.chezmoidata/identity.toml` (versioned, merged into template data automatically, no re-init) defines `githubUser` and `workEmail`. `dot_gitconfig-eit`, the git hook, `starship.toml` and `build-allowed-signers` became templates that reference them; the personal pill uses the `email` prompt value.
 
 ## G-17 — Linux desktop polish {#g-17}
 
@@ -215,5 +211,4 @@ apply errors. Wrap each in `{{ if ne .chezmoi.os "windows" }}`.
 
 ## G-20 — `me:` shortcut renders the wrong owner {#g-20}
 
-`[url "git@github.com:{{ .name | replace " " "" | lower }}/"] insteadOf = "me:"` renders to
-`paulwilliams/`, but the GitHub account is `skenmy`. Use a dedicated `githubUser` data value.
+**Fixed.** The `me:` shortcut now renders from `{{ .githubUser }}` → `git@github.com:skenmy/`.

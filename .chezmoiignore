@@ -33,6 +33,10 @@ run_once_install-packages-windows.ps1
 .gitconfig-eit
 .git-hooks
 {{- end }}
+{{- if .work }}
+{{/* Never push personal GitHub keys as login keys onto an employer machine */}}
+.ssh/authorized_keys
+{{- end }}
 
 README.md
 CLAUDE.md

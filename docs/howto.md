@@ -111,6 +111,18 @@ Add a line to `.chezmoiignore` inside the matching block. Paths are **target** p
 not `dot_config/ghostty`). Existing blocks cover `ne .chezmoi.os "<os>"`, `eq .chezmoi.os "windows"`,
 `.headless`, `not .work`.
 
+### Change an identity value (emails, GitHub user)
+
+Edit `.chezmoidata/identity.toml`. It is merged into template data on every apply, so no machine needs
+re-initialising. The personal email is the `email` prompt answer (`chezmoi edit-config`).
+
+### Change the chezmoi config template
+
+`.chezmoi.toml.tmpl` is rendered **once**, at `chezmoi init`. After changing it (new `[data]` keys,
+`[gitHub] refreshPeriod`, pager), existing boxes need `chezmoi init` (no repo argument) to re-render
+`~/.config/chezmoi/chezmoi.toml`; `promptStringOnce` keeps the existing answers. Prefer
+`.chezmoidata/*.toml` for plain values, which needs nothing.
+
 ### Override on one machine without touching the repo
 
 | Want | Edit (unmanaged, survives apply) |

@@ -32,11 +32,13 @@ then pulls:
 | Bitwarden item | Type | Written to |
 |---|---|---|
 | `gpg/9BFD73704EA02674` | Secure Note (notes = armored private key, field `trust`) | `gpg --import` + ownertrust |
-| `ssh/personal/id_ed25519` | Secure Note (notes = private key, field `public`) | `~/.ssh/id_ed25519` (0600) + `.pub` |
+| `ssh/personal/id_ed25519` | Secure Note (notes = private key, field `public`) | `~/.ssh/id_ed25519` (personal) or `~/.ssh/id_ed25519_skenmy` (work), 0600, + `.pub` — written **after** `chezmoi init` so the flag is known |
 | `restic/personal` | Secure Note (notes = env file body) | `~/.config/restic/env` (0600) |
 | `atuin/skenmy.com` | Login (password + field `key`) | `atuin login -u skenmy -p … -k …`, then `atuin import auto && atuin sync -f` |
 
-Then `chezmoi init --apply skenmy` (or `chezmoi apply --force` if the source dir exists). Re-runnable.
+Order: GPG import → stage atuin creds → restic env → `chezmoi init --apply skenmy` (or `chezmoi apply --force`
+if the source dir exists) → SSH key → a second `chezmoi apply` so `allowed_signers` sees the key → atuin
+login and sync. Re-runnable.
 `scripts/seed-bitwarden.sh` pushes the same four items from a machine that already has the secrets.
 
 Windows has no equivalent; the message at the top of `bootstrap.sh` points at a `scripts/bootstrap.ps1`

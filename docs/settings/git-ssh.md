@@ -1,8 +1,11 @@
 # Git & SSH
 
-*Reviewed against `ada9e1c`, 2026-09-22.* Files: `dot_gitconfig.tmpl`, `dot_gitconfig-eit`, `dot_gitignore_global`,
+*Reviewed against `1e30dcf` + `fix/identity-and-keys`, 2026-09-22.* Files: `dot_gitconfig.tmpl`, `dot_gitconfig-eit.tmpl`, `dot_gitignore_global`,
 `private_dot_ssh/private_config.tmpl`, `private_dot_ssh/private_authorized_keys.tmpl`, `private_dot_ssh/id_rsa.pub`,
-`private_dot_git-hooks/executable_pre-commit`, `run_onchange_after_build-allowed-signers.sh.tmpl`.
+`private_dot_git-hooks/executable_pre-commit.tmpl`, `run_onchange_after_build-allowed-signers.sh.tmpl`, `.chezmoidata/identity.toml`.
+
+Identity strings come from `.chezmoidata/identity.toml` (`githubUser = skenmy`, `workEmail = pwilliams@eit.org`)
+and the `email` prompt; nothing is hard-coded in templates any more.
 
 ## Identity and signing
 
@@ -10,7 +13,7 @@
 |---|---|---|
 | `user.name` / `user.email` | from the `name` / `email` prompts (defaults Paul Williams / paul@skenmy.com) | same |
 | `user.signingkey` | `~/.ssh/id_ed25519.pub` | `~/.ssh/id_ed25519_skenmy.pub` |
-| Inside `~/code/eit/` | n/a | `includeIf gitdir:~/code/eit/` → `~/.gitconfig-eit`: `pwilliams@eit.org`, `~/.ssh/id_ed25519_eit.pub` |
+| Inside `~/code/eit/` | n/a | `includeIf gitdir:~/code/eit/` → `~/.gitconfig-eit`: `workEmail`, `~/.ssh/id_ed25519_eit.pub` |
 | `commit.gpgsign`, `tag.gpgsign` | `true` when `signingKey` is non-empty | same |
 | `gpg.format` | `ssh` | same |
 | `gpg.ssh.allowedSignersFile` | `~/.ssh/allowed_signers` | same |
@@ -20,12 +23,14 @@ on/off switch and the ownertrust target for the imported GPG public key; git nev
 deliberate hard rule in `CLAUDE.md`: do not turn signing off or revert to GPG.
 
 `~/.ssh/allowed_signers` is rebuilt by `run_onchange_after_build-allowed-signers.sh.tmpl` whenever the
-rendered `email`/`work` values change. It writes `<email> <key>` for the personal key and, on work boxes,
+rendered `email`/`work` values change **or a key file appears** (the script embeds `stat` results for the
+expected `.pub` files, so the first apply after bootstrap writes the key triggers a rebuild). It writes `<email> <key>` for the personal key and, on work boxes,
 `pwilliams@eit.org <key>` for the EIT key, skipping any key file that does not exist yet.
 
 The private keys are **not** provisioned by chezmoi. `scripts/bootstrap.sh` writes the Bitwarden item
-`ssh/personal/id_ed25519` to `~/.ssh/id_ed25519`. On work boxes the configs expect `id_ed25519_skenmy` and
-`id_ed25519_eit`, which nothing creates ([G-08](../gaps.md#g-08)).
+`ssh/personal/id_ed25519` to `~/.ssh/id_ed25519` on personal boxes and to `~/.ssh/id_ed25519_skenmy` on work
+boxes (it reads the `work` flag from `chezmoi data` after `chezmoi init`). The EIT key `id_ed25519_eit` is a
+manual step from 1Password; bootstrap prints the reminder.
 
 ## Core behaviour
 
@@ -51,7 +56,7 @@ The private keys are **not** provisioned by chezmoi. `scripts/bootstrap.sh` writ
 | `help.autocorrect` | `prompt` | |
 | `color.ui` | `auto` | |
 | `url "git@github.com:".insteadOf` | `gh:` | `git clone gh:user/repo` |
-| `url "git@github.com:<name-lowercased>/".insteadOf` | `me:` | renders to `paulwilliams/` from the `name` prompt, **not** `skenmy/` |
+| `url "git@github.com:{{ .githubUser }}/".insteadOf` | `me:` | `git clone me:repo` → `git@github.com:skenmy/repo` |
 
 Aliases: [generated list](../generated/git-aliases.md) (21). `wip` commits with `--no-verify`, bypassing
 the identity hook.
@@ -87,9 +92,10 @@ anything `pre-commit install` writes, unless the repo overrides `core.hooksPath`
 
 ## `~/.ssh/authorized_keys`
 
-Rendered from `gitHubKeys "skenmy"` at **every** `chezmoi apply`: the live public keys on
-github.com/skenmy.keys become login-authorised keys on every box, work machines included. Per-host extras
-are appended from `~/.ssh/authorized_keys.local`. The template needs network access and the GitHub API at
-apply time ([G-07](../gaps.md#g-07)).
+**Personal boxes only** (unmanaged on `work` via `.chezmoiignore`, so an employer's file is left alone).
+Rendered from `gitHubKeys .githubUser`: the live public keys on github.com/skenmy.keys become
+login-authorised keys. Per-host extras are appended from `~/.ssh/authorized_keys.local`. `gitHub.refreshPeriod
+= 168h` in the chezmoi config caches the API response for a week, so offline applies keep working once a
+box has fetched once (existing boxes need one `chezmoi init` to pick the config change up).
 
 `~/.ssh/id_rsa.pub` is deployed as a static file (public half of a legacy RSA key).
