@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "skenmy/dotfiles — kept in .github/ because chezmoi would deploy a root-level renovate.json to ~/renovate.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "labels": ["dependencies"],
+  "automerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+  "pre-commit": {
+    "enabled": true,
+    "managerFilePatterns": ["/(^|/)\\.pre-commit-config\\.yaml$/", "/^dot_config/pre-commit/skenmy-defaults\\.yaml$/"]
+  },
+  "packageRules": [
+    {
+      "description": "One PR for all GitHub Actions bumps",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "description": "One PR for all pre-commit hook bumps (repo config + shipped defaults)",
+      "matchManagers": ["pre-commit"],
+      "groupName": "pre-commit hooks"
+    }
+  ]
+}
