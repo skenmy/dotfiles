@@ -9,12 +9,12 @@ Severity: **High** = something is broken or lands on machines that should not ge
 
 | ID | Sev | Profiles | Summary | Status |
 |---|---|---|---|---|
-| [G-01](#g-01) | High | Linux | Tools the configs depend on are never installed (delta, eza, lazygit, gh, direnv, …) | open |
-| [G-02](#g-02) | High | Linux | Neovim config needs 0.11+, distros ship 0.7–0.9 | open |
+| [G-01](#g-01) | High | Linux | Tools the configs depend on are never installed (delta, eza, lazygit, gh, direnv, …) | **fixed** — GitHub release binaries into `~/.local/bin` |
+| [G-02](#g-02) | High | Linux | Neovim config needs 0.11+, distros ship 0.7–0.9 | **fixed** — upstream tarball to `~/.local/nvim` when distro nvim < 0.11 |
 | [G-03](#g-03) | High | macOS work, macOS headless | Brewfile is not profile-aware: every cask on every Mac | **fixed** — fragments in `.chezmoitemplates/brew/` |
 | [G-04](#g-04) | High | macOS | brew-sync re-appends commented lines; 6 duplicates, two cask-name pairs | **fixed** — name-based diff, Brewfile deduped |
 | [G-05](#g-05) | High | Windows | No auto-update, no bootstrap, signing key never provisioned, nvim config in wrong place | open |
-| [G-06](#g-06) | Medium | Linux (Arch, Alpine) | Debian package names break pacman/apk; dead headless branch | open |
+| [G-06](#g-06) | Medium | Linux (Arch, Alpine) | Debian package names break pacman/apk; dead headless branch | **fixed** — per-manager names; headless branch now gates Zed + font |
 | [G-07](#g-07) | Medium | all | `authorized_keys` needs GitHub at every apply; personal keys land on work boxes | open |
 | [G-08](#g-08) | Medium | work | Work profile expects `id_ed25519_skenmy` / `_eit`; bootstrap writes `id_ed25519` | open |
 | [G-09](#g-09) | Medium | macOS headless | No restic backup on headless Macs — intentional? | decision needed |
@@ -25,9 +25,9 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-14](#g-14) | Low | all | pre-commit defaults pin 2024 revisions | open |
 | [G-15](#g-15) | Low | Windows | Four bash `run_onchange` scripts have no OS guard | open |
 | [G-16](#g-16) | Low | all | Identity emails hard-coded in four places | open |
-| [G-17](#g-17) | Low | Linux desktop | tmux copy assumes `pbcopy`/`xclip`; no Wayland; no Nerd Font installed | open |
+| [G-17](#g-17) | Low | Linux desktop | tmux copy assumes `pbcopy`/`xclip`; no Wayland; no Nerd Font installed | **fixed** — `wl-copy` fallback; JetBrainsMono Nerd Font installed on desktops |
 | [G-18](#g-18) | Low | macOS | brew-sync commits unsigned, straight to `main` | **fixed** — commits are signed; unsigned fallback removed |
-| [G-19](#g-19) | Low | Linux | `chsh` to zsh is manual | open |
+| [G-19](#g-19) | Low | Linux | `chsh` to zsh is manual | **fixed** — installer runs `chsh` when interactive |
 | [G-20](#g-20) | Low | all | `me:` URL shortcut renders to `paulwilliams/`, not `skenmy/` | open |
 
 ---
@@ -44,7 +44,7 @@ zoxide have install blocks. `delta`, `eza`, `lazygit`, `gh` are never installed.
 `git diff`/`git log` print an error before falling back to plain output, and `chezmoi diff` fails outright.
 `ls` keeps its `eza` aliases only because they are guarded; `k`, `tf`, `lzg` are dead aliases.
 
-**Fix options.** (a) Extend the existing `install_release_bin` helper to cover `dandavison/delta`,
+**Fixed.** `install_release_bin` now handles archives and raw binaries and installs delta, eza, lazygit, gh, direnv, yq, tealdeer and xh from GitHub releases; the tealdeer pattern had also never matched its raw-binary assets, so `tldr` was missing too. `btop` moved to the distro list. Kubernetes tooling is still macOS-only by choice. Original options for the record: (a) Extend the existing `install_release_bin` helper to cover `dandavison/delta`,
 `eza-community/eza`, `jesseduffield/lazygit`, `cli/cli`, `direnv/direnv`, `mikefarah/yq`. (b) Install
 Linuxbrew in the Linux script and reuse the Brewfile minus casks (`~/.zprofile` already loads it). Option
 (a) keeps servers lean; (b) unifies the inventory. Either way, gate `core.pager` on `lookPath "delta"`
@@ -59,9 +59,7 @@ Ubuntu 24.04 ships 0.9.5, Debian 12 ships 0.7.2.
 
 **Impact.** On Linux, `nvim` starts with Lua errors and no LSP or tree-sitter.
 
-**Fix.** Install from the upstream release tarball into `~/.local` (or `mise use -g neovim@latest`,
-which uses the GitHub release) instead of the distro package, and pin a minimum in `init.lua` with
-`vim.fn.has("nvim-0.11")` plus a clear message.
+**Fixed.** `neovim` left the distro package list; `install_release_tree` extracts the upstream `nvim-linux-<arch>.tar.gz` to `~/.local/nvim` and symlinks `~/.local/bin/nvim` whenever the nvim on `PATH` is missing or older than 0.11. A version guard in `init.lua` is still a nice-to-have.
 
 ## G-03 — Brewfile is not profile-aware {#g-03}
 
@@ -129,8 +127,7 @@ appends `|| true`, so on Arch the whole transaction fails and nothing installs, 
 has no `|| true` under `set -e`, so the run_once aborts on Alpine. The `{{ if not .headless }}` /
 `{{ else }}` blocks around `COMMON_PKGS+=` are identical, so headless has no effect on Linux packages.
 
-**Fix.** A per-manager name map (`declare -A`) or install `fd`/`bat` from release binaries everywhere.
-Delete the dead headless branch or give it a purpose (skip `neovim`, `ripgrep`, `bat` on servers).
+**Fixed.** Each `install_<manager>` passes its own spelling (`fd-find`/`xz-utils` on apt, `fd-find`/`xz` on dnf, `fd`/`xz` on pacman and apk) and `--needed` on pacman; failures are logged and the script continues with a summary. The headless branch now gates Zed and the Nerd Font instead of being a no-op.
 
 ## G-07 — `authorized_keys` from GitHub at apply time {#g-07}
 
@@ -206,8 +203,7 @@ apply errors. Wrap each in `{{ if ne .chezmoi.os "windows" }}`.
 
 ## G-17 — Linux desktop polish {#g-17}
 
-tmux copy pipes to `pbcopy` or `xclip` (no `wl-copy` for Wayland). No Nerd Font is installed on Linux,
-so starship/eza glyphs render as boxes in a local terminal (fine over SSH from a Mac).
+**Fixed.** tmux copy tries `pbcopy`, then `wl-copy`, then `xclip`. Linux desktops get JetBrainsMono Nerd Font in `~/.local/share/fonts/JetBrainsMonoNerdFont` with `fc-cache`.
 
 ## G-18 — brew-sync bypasses PR and signing {#g-18}
 
@@ -215,8 +211,7 @@ so starship/eza glyphs render as boxes in a local terminal (fine over SSH from a
 
 ## G-19 — Default shell on Linux {#g-19}
 
-zsh is installed but `chsh` is left to the user (README says so). Could be automated in the run_once
-with `chsh -s "$(command -v zsh)"` when `$SHELL` is not zsh.
+**Fixed.** The installer runs `chsh -s $(command -v zsh)` when stdin is a terminal and `$SHELL` is not zsh; non-interactive applies skip it and print nothing.
 
 ## G-20 — `me:` shortcut renders the wrong owner {#g-20}
 

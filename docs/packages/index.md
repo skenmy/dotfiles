@@ -24,15 +24,15 @@ this section list every entry; this page explains how they are wired.
 
 ## Linux: distro packages + upstream installers
 
-- `run_once_install-packages-linux.sh.tmpl` detects apt, dnf, pacman or apk and installs a fixed list of
-  14 base packages with one verbatim name list (Debian spelling).
-- Tools without a good distro package come from upstream scripts or GitHub release tarballs into
-  `~/.local/bin`: starship, mise, atuin, zoxide, fzf, tealdeer, xh, restic (distro), Tailscale (personal only),
-  Zed (desktops only).
-- Antidote and TPM are cloned into `~/.antidote` and `~/.tmux/plugins/tpm`.
-- Nothing installs `delta`, `eza`, `lazygit`, `gh`, `direnv`, `yq`, `btop`, `k9s`, `kubectl`, `helm`, `terraform`
-  or a current Neovim, although shell and git configs assume several of them. See [G-01](../gaps.md#g-01)
-  and [G-02](../gaps.md#g-02).
+- `run_once_install-packages-linux.sh.tmpl` detects apt, dnf, pacman or apk and installs 13 base packages
+  plus each manager's own spelling of `fd`, `xz` and the build-tools group.
+- Upstream install scripts: starship, mise, atuin, zoxide, fzf; Tailscale (personal only); Zed (desktops only).
+- GitHub release binaries into `~/.local/bin` (`install_release_bin`, honours `GITHUB_TOKEN`): delta, eza,
+  lazygit, gh, direnv, yq, tealdeer, xh. Neovim ≥ 0.11 from the upstream tarball into `~/.local/nvim`
+  whenever the distro one is older. JetBrainsMono Nerd Font on desktops.
+- Antidote and TPM are cloned into `~/.antidote` and `~/.tmux/plugins/tpm`; `chsh` to zsh when interactive.
+- Still macOS-only by choice: `k9s`, `kubectl`, `helm`, `kustomize`, `kubeseal`, `flux`, `terraform`,
+  `mkcert`, `pre-commit`, `uv`. The `k`/`tf` aliases are inert on Linux.
 - `~/.zprofile` will load Linuxbrew if it exists, but nothing installs it.
 
 → [Linux inventory](../generated/linux.md)

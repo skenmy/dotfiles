@@ -17,10 +17,10 @@ from . import render as r
 BREW_FRAGMENTS = ("common", "gui", "personal")
 
 LINUX_DISTRO_EXTRAS = {
-    "apt": "build-essential (+ symlinks batcat→bat, fdfind→fd)",
-    "dnf": "@development-tools",
-    "pacman": "base-devel",
-    "apk": "build-base",
+    "apt": "fd-find, xz-utils, build-essential (+ symlinks batcat→bat, fdfind→fd)",
+    "dnf": "fd-find, xz, @development-tools",
+    "pacman": "fd, xz, base-devel (--needed)",
+    "apk": "fd, xz, build-base",
 }
 
 

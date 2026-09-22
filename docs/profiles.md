@@ -18,9 +18,9 @@ Change any of them later with `chezmoi edit-config` then `chezmoi apply`.
 
 | | macOS desktop | macOS headless | Linux desktop | Linux server (`headless`) | Windows |
 |---|---|---|---|---|---|
-| **Packages** | Homebrew: `common` + `gui` fragments (+ `personal` unless `work`) | `common` (+ `personal` unless `work`), `--no-upgrade`; no casks | apt/dnf/pacman/apk base list + upstream install scripts | Same as Linux desktop (the headless branch is identical) | 19 winget packages + PSReadLine |
+| **Packages** | Homebrew: `common` + `gui` fragments (+ `personal` unless `work`) | `common` (+ `personal` unless `work`), `--no-upgrade`; no casks | distro base list + upstream scripts + GitHub release binaries + Zed + Nerd Font | Same minus Zed and the font | 20 winget packages + PSReadLine |
 | **Shell** | zsh + antidote + starship | same | same | same | PowerShell profile + starship |
-| **Neovim config** | ✓ | ✓ | ✓ (but apt Neovim is too old, see [G-02](gaps.md#g-02)) | ✓ (same caveat) | deployed to the wrong path, see [G-05](gaps.md#g-05) |
+| **Neovim config** | ✓ | ✓ | ✓ (Neovim ≥ 0.11 from upstream tarball) | ✓ | deployed to the wrong path, see [G-05](gaps.md#g-05) |
 | **tmux config** | ✓ | ✓ | ✓ | ✓ | – |
 | **Ghostty config** | ✓ | – | – | – | – |
 | **Zed** (cask / install.sh / winget) + `settings.json` | ✓ | – | ✓ | – | ✓ (`AppData\Roaming\Zed`) |
