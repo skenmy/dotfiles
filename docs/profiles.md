@@ -23,12 +23,12 @@ Change any of them later with `chezmoi edit-config` then `chezmoi apply`.
 | **Neovim config** | ✓ | ✓ | ✓ (but apt Neovim is too old, see [G-02](gaps.md#g-02)) | ✓ (same caveat) | deployed to the wrong path, see [G-05](gaps.md#g-05) |
 | **tmux config** | ✓ | ✓ | ✓ | ✓ | – |
 | **Ghostty config** | ✓ | – | – | – | – |
-| **VS Code settings + extensions** | ✓ | – | `extensions.txt` deployed, installer never runs | – | `extensions.txt` deployed, inert |
+| **Zed** (cask / install.sh / winget) + `settings.json` | ✓ | – | ✓ | – | ✓ (`AppData\Roaming\Zed`) |
 | **macOS defaults** | ✓ (42 keys) | – | – | – | – |
 | **Nightly `chezmoi update`** | launchd 03:17 | launchd 03:17 | systemd user timer 03:17 (+30 min jitter) | same, needs `loginctl enable-linger` | **none** |
 | **Nightly restic backup** | launchd 04:32 | **none** | systemd 04:32 (+jitter) | systemd 04:32 | **none** |
 | **Nightly brew-sync** | launchd 02:00 → `common` if work, else `personal` | – | – | – | – |
-| **Tailscale** | `tailscale-app` cask, personal only | same | `install.sh` unless `work` | same | – |
+| **Tailscale** | `tailscale-app` cask, personal only | same (personal) | `install.sh` unless `work` | same | – |
 | **Bitwarden bootstrap** (`scripts/bootstrap.sh`) | ✓ | ✓ | ✓ | ✓ | **none** |
 | **git config** | ✓ SSH signing | ✓ | ✓ | ✓ | ✓ but signing key never provisioned |
 | **ssh config + authorized_keys** | ✓ | ✓ | ✓ | ✓ | ✓ (`ControlMaster` unsupported) |
@@ -60,9 +60,9 @@ Applies on every OS unless stated.
 
 | OS | Effect |
 |---|---|
-| macOS | Skips Ghostty config, VS Code settings + extensions, macOS defaults, brew-sync timer, **restic timer**, and the whole `gui.Brewfile` fragment (all casks and fonts); `brew bundle` runs with `--no-upgrade`. |
-| Linux | Skips `~/.config/code/extensions.txt` only. The package list has a headless branch but both branches are identical, so packages are unaffected. |
-| Windows | Skips `~/.config/code/extensions.txt`. Nothing else. |
+| macOS | Skips Ghostty config, Zed config, macOS defaults, brew-sync timer, **restic timer**, and the whole `gui.Brewfile` fragment (all casks and fonts); `brew bundle` runs with `--no-upgrade`. |
+| Linux | Skips the Zed install and `~/.config/zed`. Packages are otherwise identical. |
+| Windows | Nothing (Zed config lives under `AppData`, which is not headless-gated; a headless Windows box is not a supported profile). |
 
 ## Unconditional exclusions
 

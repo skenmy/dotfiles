@@ -1,6 +1,6 @@
 # Packages — overview
 
-*Reviewed against `ada9e1c`, 2026-09-22.*
+*Reviewed against `1e30dcf` + `fix/brewfile-profiles` + `feat/zed-everywhere`, 2026-09-22.*
 
 Three install mechanisms, one per OS, plus a handful of cross-OS bootstraps. The generated pages in
 this section list every entry; this page explains how they are wired.
@@ -27,7 +27,8 @@ this section list every entry; this page explains how they are wired.
 - `run_once_install-packages-linux.sh.tmpl` detects apt, dnf, pacman or apk and installs a fixed list of
   14 base packages with one verbatim name list (Debian spelling).
 - Tools without a good distro package come from upstream scripts or GitHub release tarballs into
-  `~/.local/bin`: starship, mise, atuin, zoxide, fzf, tealdeer, xh, restic (distro), Tailscale (personal only).
+  `~/.local/bin`: starship, mise, atuin, zoxide, fzf, tealdeer, xh, restic (distro), Tailscale (personal only),
+  Zed (desktops only).
 - Antidote and TPM are cloned into `~/.antidote` and `~/.tmux/plugins/tpm`.
 - Nothing installs `delta`, `eza`, `lazygit`, `gh`, `direnv`, `yq`, `btop`, `k9s`, `kubectl`, `helm`, `terraform`
   or a current Neovim, although shell and git configs assume several of them. See [G-01](../gaps.md#g-01)
@@ -38,7 +39,7 @@ this section list every entry; this page explains how they are wired.
 
 ## Windows: winget
 
-- `run_once_install-packages-windows.ps1.tmpl` installs 19 winget IDs (`--exact --silent`) and the
+- `run_once_install-packages-windows.ps1.tmpl` installs 20 winget IDs (`--exact --silent`, including Zed) and the
   latest PSReadLine module. It exits early with a message if winget is missing.
 - No Bitwarden, restic, tmux, GnuPG, direnv, pre-commit, k8s tooling, or auto-update timer.
 
@@ -51,12 +52,12 @@ this section list every entry; this page explains how they are wired.
 | `run_onchange_after_install-gh-extensions.sh.tmpl` | `dlvhdr/gh-dash` once `gh auth status` succeeds | all OS |
 | `run_onchange_after_update-tldr-cache.sh.tmpl` | refreshes the tealdeer page cache | all OS |
 | `run_onchange_after_import-gpg-key.sh.tmpl` | imports `gpg-public-key.asc`, sets ultimate ownertrust | all OS |
-| `run_onchange_after_install-code-extensions.sh.tmpl` | missing VS Code extensions from `extensions.txt` | macOS desktop |
+| Zed `settings.json` → `auto_install_extensions` | Zed extensions, by Zed itself on launch | every desktop |
 | Neovim `init.lua` | lazy.nvim, then every plugin, LSP server (via mason) and tree-sitter parser on first start | wherever nvim runs |
 | `~/.tmux.conf` | TPM and its plugins on first tmux start | macOS, Linux |
 | `~/.zshrc` (Linux) | clones antidote if `~/.antidote` is missing | Linux |
 
-→ [Neovim](../generated/nvim.md) · [VS Code extensions](../generated/vscode-extensions.md) ·
+→ [Neovim](../generated/nvim.md) · [Zed extensions](../generated/zed-extensions.md) ·
 [zsh plugins](../generated/zsh-plugins.md) · [tmux plugins](../generated/tmux-plugins.md)
 
 ## Runtimes

@@ -218,12 +218,11 @@ Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. 
 - **gh-dash** — terminal dashboard for GitHub PRs/issues/repos. Auto-installed via `gh extension install dlvhdr/gh-dash` on apply once `gh` is authed. Run with `gh dash`.
 - **direnv** (`dot_config/direnv/direnvrc`) — global helpers: `layout mise` (use the project's mise toolchain), `dotenv_if_exists`, `use_flake`, `use_op` (pull 1Password secrets into env).
 
-### Editor: VS Code (macOS)
+### Editor: Zed (every desktop)
 
-- **`Library/Application Support/Code/User/settings.json`** — global user settings (formatter, autosave, git auto-fetch, formatOnSave, etc.).
-- **`dot_config/code/extensions.txt`** — one extension ID per line. The `run_onchange_after_install-code-extensions.sh.tmpl` script diffs this against `code --list-extensions` on apply and installs missing ones via `code --install-extension`.
-- Append-only on the extensions file: a local `code --install-extension foo` won't sync back. To propagate, edit the source list directly. (Mirrors the brew-sync philosophy: removals are intentional and live in PRs.)
-- Skipped on `headless=true` boxes (no point installing extensions on a server with no GUI).
+- **`.chezmoitemplates/zed-settings.json`** — one settings file rendered to `~/.config/zed/settings.json` (macOS/Linux) and `~/AppData/Roaming/Zed/settings.json` (Windows). VSCode keymap, Ayu theme, JetBrainsMono Nerd Font, autosave + format on save, panels on the right, Claude agent server.
+- Extensions are declared under `auto_install_extensions` and installed by Zed itself on launch — no installer script.
+- Installed via the `zed` cask (`gui.Brewfile`), `winget install ZedIndustries.Zed`, or `curl -f https://zed.dev/install.sh | sh` on Linux desktops. Skipped on `headless=true` (Zed needs a GPU).
 
 ### Mesh VPN (personal boxes only)
 - **Tailscale** — installed via the Brewfile cask on macOS and the official `install.sh` on Linux. On Linux, install is gated to `work=false` so employer-managed boxes aren't disturbed. Authenticating is interactive (`sudo tailscale up --operator=$USER` on Linux, menu-bar app on macOS) and only needed once per device.

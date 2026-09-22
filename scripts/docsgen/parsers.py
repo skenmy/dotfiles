@@ -152,6 +152,23 @@ def parse_tips(text: str) -> list[tuple[str, str]]:
 
 
 # --------------------------------------------------------------------------
+# Zed settings (JSON with comments)
+# --------------------------------------------------------------------------
+
+AUTO_INSTALL_BLOCK = re.compile(r'"auto_install_extensions"\s*:\s*\{(.*?)\}', re.DOTALL)
+JSONC_COMMENT = re.compile(r"^\s*//.*$", re.MULTILINE)
+
+
+def parse_zed_extensions(text: str) -> list[tuple[str, bool]]:
+    """Return (extension, enabled) pairs from Zed's auto_install_extensions block."""
+    body = JSONC_COMMENT.sub("", text)
+    match = AUTO_INSTALL_BLOCK.search(body)
+    if not match:
+        return []
+    return [(name, flag == "true") for name, flag in re.findall(r'"([^"]+)"\s*:\s*(true|false)', match.group(1))]
+
+
+# --------------------------------------------------------------------------
 # macOS defaults
 # --------------------------------------------------------------------------
 

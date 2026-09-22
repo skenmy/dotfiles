@@ -101,6 +101,15 @@ class LineListTests(unittest.TestCase):
         self.assertEqual(p.parse_tips("tip zero\n"), [("General", "tip zero")])
 
 
+class ZedTests(unittest.TestCase):
+    def test_auto_install_extensions_with_comments(self):
+        text = '{\n  // note\n  "auto_install_extensions": {\n    "html": true, // trailing\n    "latex": false\n  },\n  "other": { "x": true }\n}'
+        self.assertEqual(p.parse_zed_extensions(text), [("html", True), ("latex", False)])
+
+    def test_missing_block_returns_empty(self):
+        self.assertEqual(p.parse_zed_extensions('{"theme": "x"}'), [])
+
+
 class MacosDefaultsTests(unittest.TestCase):
     SCRIPT = """# ---- Keyboard ----
 defaults write NSGlobalDomain KeyRepeat -int 2

@@ -11,6 +11,7 @@ run_once_install-packages-linux.sh
 {{- end }}
 {{- if ne .chezmoi.os "windows" }}
 Documents
+AppData
 run_once_install-packages-windows.ps1
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
@@ -21,11 +22,11 @@ run_once_install-packages-windows.ps1
 .tmux.conf
 .config/ghostty
 .config/restic
+.config/zed
 {{- end }}
 {{- if default false .headless }}
 .config/ghostty
-.config/code
-Library/Application Support/Code
+.config/zed
 {{- end }}
 
 {{- if not .work }}

@@ -54,7 +54,7 @@ nav:
       - Linux: generated/linux.md
       - Windows: generated/windows.md
       - Neovim: generated/nvim.md
-      - VS Code extensions: generated/vscode-extensions.md
+      - Zed extensions: generated/zed-extensions.md
       - zsh plugins: generated/zsh-plugins.md
       - tmux plugins: generated/tmux-plugins.md
   - Settings:

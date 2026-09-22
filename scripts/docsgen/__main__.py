@@ -46,7 +46,7 @@ def build_pages(repo: Path) -> dict[str, str]:
     linux_common = p.parse_bash_array(linux_script, "COMMON_PKGS")
     linux_guarded = p.parse_guarded_installs(linux_script)
     winget = p.parse_winget_packages(read(repo, "run_once_install-packages-windows.ps1.tmpl"))
-    extensions = p.parse_line_list(read(repo, "dot_config/code/extensions.txt"))
+    zed_extensions = p.parse_zed_extensions(read(repo, ".chezmoitemplates/zed-settings.json"))
     zsh_plugins = p.parse_line_list(read(repo, "dot_zsh_plugins.txt"))
     git_aliases = p.parse_git_aliases(read(repo, "dot_gitconfig.tmpl"))
     zsh_aliases = p.parse_shell_aliases(read(repo, "dot_zshrc.tmpl"))
@@ -66,7 +66,7 @@ def build_pages(repo: Path) -> dict[str, str]:
         "Linux distro packages": len(linux_common),
         "Linux upstream installs": len(linux_guarded),
         "Windows winget packages": len(winget),
-        "VS Code extensions": len(extensions),
+        "Zed extensions": len(zed_extensions),
         "zsh plugins": len(zsh_plugins),
         "git aliases": len(git_aliases),
         "zsh aliases": len(zsh_aliases),
@@ -84,10 +84,11 @@ def build_pages(repo: Path) -> dict[str, str]:
         "brewfile.md": r.render_brewfile(brew),
         "linux.md": r.render_linux(linux_common, linux_guarded, LINUX_DISTRO_EXTRAS),
         "windows.md": r.render_windows(winget),
-        "vscode-extensions.md": r.render_simple_list(
-            "VS Code extensions", "dot_config/code/extensions.txt",
-            "Installed on non-headless macOS when the list changes. Append-only: local installs never sync back.",
-            extensions, "Extension ID"),
+        "zed-extensions.md": r.render_pairs(
+            "Zed extensions", ".chezmoitemplates/zed-settings.json",
+            "Declared under `auto_install_extensions`; Zed installs them itself on launch, on every OS. "
+            "Removing a line stops future installs but does not uninstall.",
+            [(name, "install" if on else "skip") for name, on in zed_extensions], ["Extension", "Action"]),
         "zsh-plugins.md": r.render_simple_list(
             "zsh plugins", "dot_zsh_plugins.txt",
             "Loaded by antidote on every interactive zsh. `kind:defer` loads after the first prompt.",

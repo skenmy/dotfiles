@@ -55,7 +55,6 @@ which the scripts exploit by embedding `{{ include "<file>" | sha256sum }}` of t
 | `run_onchange_after_install-update-timer.sh.tmpl` | macOS + Linux | plist, units, worker | reload launchd agent / enable systemd timer |
 | `run_onchange_after_install-brew-sync.sh.tmpl` | macOS, not headless | plist, worker | reload launchd agent |
 | `run_onchange_after_install-restic-units.sh.tmpl` | macOS not headless; Linux | plist, units, worker | reload / enable |
-| `run_onchange_after_install-code-extensions.sh.tmpl` | macOS, not headless | `extensions.txt` | install missing extensions |
 | `run_onchange_after_install-gh-extensions.sh.tmpl` | all (bash) | hard-coded list literal | `gh extension install dlvhdr/gh-dash` once authed |
 | `run_onchange_after_import-gpg-key.sh.tmpl` | all (bash) | `gpg-public-key.asc` | `gpg --import` + ultimate ownertrust of `signingKey` |
 | `run_onchange_after_build-allowed-signers.sh.tmpl` | all (bash) | `email`, `work` | rewrite `~/.ssh/allowed_signers` |

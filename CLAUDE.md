@@ -5,7 +5,7 @@ This is the **chezmoi source repo** for Paul's personal dotfiles. Files here ren
 ## What lives where
 
 - `dot_*` / `private_dot_*` — files that map to `~/.foo` etc. chezmoi strips the `dot_` prefix and decodes `private_` to mean 0600 perms (dirs 0700). `private_dot_ssh/` → `~/.ssh/`.
-- `dot_config/` — `~/.config/`. Per-tool folders inside: `starship.toml`, `ghostty/`, `nvim/`, `atuin/`, `mise/`, `pre-commit/`, `direnv/`, `restic/`, `dotfiles/` (tips file, brew-sync ignore list).
+- `dot_config/` — `~/.config/`. Per-tool folders inside: `starship.toml`, `ghostty/`, `nvim/`, `zed/` (renders `.chezmoitemplates/zed-settings.json`; Windows gets the same via `AppData/Roaming/Zed/`), `atuin/`, `mise/`, `pre-commit/`, `direnv/`, `restic/`, `dotfiles/` (tips file, brew-sync ignore list + target).
 - `Library/LaunchAgents/` (macOS only) — launchd plists. Currently the daily `chezmoi-update`, nightly `restic-backup`, 02:00 `dotfiles-brew-sync` jobs.
 - `dot_config/systemd/user/` (Linux only) — systemd user units for the same three jobs.
 - `Brewfile.tmpl` + `.chezmoitemplates/brew/{common,gui,personal}.Brewfile` — `~/Brewfile` is rendered from the fragments by profile (`gui` needs `headless=false`, `personal` needs `work=false`). Edit the fragments. `brew bundle` re-runs when any of them changes (see `run_onchange_after_brew-bundle.sh.tmpl`). brew-sync appends to the fragment named in `~/.config/dotfiles/brew-sync-target`.

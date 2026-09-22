@@ -86,6 +86,13 @@ Library/Application Support/Code/Code Cache
 Library/Application Support/Code/GPUCache
 Library/Application Support/Code/User/workspaceStorage
 Library/Application Support/Code/User/History
+# Zed: extensions, language servers and bundled node are re-downloaded on demand.
+Library/Application Support/Zed/extensions
+Library/Application Support/Zed/languages
+Library/Application Support/Zed/node
+.local/share/zed/extensions
+.local/share/zed/languages
+.local/share/zed/node
 # Cursor (the AI fork) mirrors VS Code layout.
 Library/Application Support/Cursor/CachedData
 Library/Application Support/Cursor/Code Cache

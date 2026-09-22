@@ -19,7 +19,7 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-08](#g-08) | Medium | work | Work profile expects `id_ed25519_skenmy` / `_eit`; bootstrap writes `id_ed25519` | open |
 | [G-09](#g-09) | Medium | macOS headless | No restic backup on headless Macs — intentional? | decision needed |
 | [G-10](#g-10) | Medium | docs | README drift (GPG vs SSH signing, themes, age, agents) | open |
-| [G-11](#g-11) | Medium | macOS desktop | VS Code settings hard-code `/Users/paul` | open |
+| [G-11](#g-11) | Medium | macOS desktop | VS Code settings hard-code `/Users/paul` | **fixed** — VS Code management removed; Zed replaces it |
 | [G-12](#g-12) | Medium | repo | No CI or pre-commit on the repo itself | partly fixed by the docs workflow |
 | [G-13](#g-13) | Low | all | Neovim `<C-j>`/`<C-k>` mapped twice | open |
 | [G-14](#g-14) | Low | all | pre-commit defaults pin 2024 revisions | open |
@@ -171,9 +171,8 @@ Keychain + 1Password SSH agent" (now 1Password on work, Bitwarden on personal). 
 
 ## G-11 — VS Code settings hard-code a username {#g-11}
 
-Four `parallels-desktop.*` keys reference `/Users/paul/…` and `/usr/local/bin/prlctl`. This machine's
-home is `/Users/pwilliams`. Make `settings.json` a `.tmpl` using `{{ .chezmoi.homeDir }}`, or drop the
-Parallels keys and let the extension re-detect.
+**Fixed by removal.** VS Code settings and the extensions installer were deleted when Zed became the
+managed editor (2026-09-22). Zed's settings template contains no machine-specific paths.
 
 ## G-12 — No CI on the repo {#g-12}
 

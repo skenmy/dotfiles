@@ -8,12 +8,7 @@ SUDO=""
 [ "$(id -u)" -ne 0 ] && SUDO="sudo"
 
 # ---- Common CLI packages (cross-distro names where possible) ----
-COMMON_PKGS=(git curl wget unzip ca-certificates gnupg zsh tmux jq tree)
-{{- if not .headless }}
-COMMON_PKGS+=(neovim ripgrep fd-find bat)
-{{- else }}
-COMMON_PKGS+=(neovim ripgrep fd-find bat)
-{{- end }}
+COMMON_PKGS=(git curl wget unzip ca-certificates gnupg zsh tmux jq tree neovim ripgrep fd-find bat)
 
 # Power tools that may need backports/cargo/manual install
 EXTRAS_VIA_BIN=(starship mise atuin zoxide eza lazygit delta gh)
@@ -120,6 +115,13 @@ install_release_bin() {
 
 command -v tldr >/dev/null || install_release_bin "dbrgn/tealdeer" "tldr" "linux-musl.tar.gz|linux-gnu.tar.gz"
 command -v xh   >/dev/null || install_release_bin "ducaale/xh"     "xh"   "unknown-linux-musl.tar.gz"
+
+# ---- Zed (code editor; desktops only — needs a GPU/Vulkan) ----
+{{- if not .headless }}
+if ! command -v zed >/dev/null; then
+    curl -f https://zed.dev/install.sh | sh
+fi
+{{- end }}
 
 # ---- Antidote (zsh plugin manager) ----
 if [ ! -d "$HOME/.antidote" ]; then

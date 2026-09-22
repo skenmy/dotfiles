@@ -66,10 +66,11 @@ script changes its hash, so it re-runs once on every Linux box.
 Edit the `$packages = @(…)` array in `run_once_install-packages-windows.ps1.tmpl` with the exact winget ID
 (`winget search name`).
 
-### VS Code extension
+### Zed extension or setting
 
-Append the `publisher.name` ID to `dot_config/code/extensions.txt`. Removal from the file does not
-uninstall; run `code --uninstall-extension id` where needed.
+Edit `.chezmoitemplates/zed-settings.json` (one file for every OS). Extensions go under
+`auto_install_extensions` as `"name": true`; Zed installs them on next launch. Removing a line does not
+uninstall; do that in Zed's extensions panel. Setting names: `zed: open default settings` in the palette.
 
 ### Neovim plugin, LSP server, or parser
 

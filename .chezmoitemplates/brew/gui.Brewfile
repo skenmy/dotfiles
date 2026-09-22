@@ -1,6 +1,7 @@
 # ── gui.Brewfile — macOS with a display (headless = false) ───────────
 # GUI apps, fonts and desktop tooling that make no sense on a headless Mac.
 
+cask "zed"                  # code editor everywhere (config: ~/.config/zed)
 cask "ghostty"
 cask "iterm2"
 cask "raycast"
