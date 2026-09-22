@@ -5,8 +5,8 @@
 
 ## restic
 
-Runs nightly on macOS desktops and every Linux box (see [Automations](automations.md)); never on
-headless Macs or Windows. Skips silently, logging one line, if `~/.config/restic/env` is missing.
+Runs nightly on every Mac (headless included, since 2026-09-22) and every Linux box (see
+[Automations](automations.md)); never on Windows. Skips silently, logging one line, if `~/.config/restic/env` is missing.
 
 | Aspect | Value |
 |---|---|
@@ -32,15 +32,19 @@ then pulls:
 | Bitwarden item | Type | Written to |
 |---|---|---|
 | `gpg/9BFD73704EA02674` | Secure Note (notes = armored private key, field `trust`) | `gpg --import` + ownertrust |
-| `ssh/personal/id_ed25519` | Secure Note (notes = private key, field `public`) | `~/.ssh/id_ed25519` (0600) + `.pub` |
+| `ssh/personal/id_ed25519` | Secure Note (notes = private key, field `public`) | `~/.ssh/id_ed25519` (personal) or `~/.ssh/id_ed25519_skenmy` (work), 0600, + `.pub` — written **after** `chezmoi init` so the flag is known |
 | `restic/personal` | Secure Note (notes = env file body) | `~/.config/restic/env` (0600) |
 | `atuin/skenmy.com` | Login (password + field `key`) | `atuin login -u skenmy -p … -k …`, then `atuin import auto && atuin sync -f` |
 
-Then `chezmoi init --apply skenmy` (or `chezmoi apply --force` if the source dir exists). Re-runnable.
+Order: GPG import → stage atuin creds → restic env → `chezmoi init --apply skenmy` (or `chezmoi apply --force`
+if the source dir exists) → SSH key → a second `chezmoi apply` so `allowed_signers` sees the key → atuin
+login and sync. Re-runnable.
 `scripts/seed-bitwarden.sh` pushes the same four items from a machine that already has the secrets.
 
-Windows has no equivalent; the message at the top of `bootstrap.sh` points at a `scripts/bootstrap.ps1`
-that does not exist ([G-05](../gaps.md#g-05)).
+`scripts/bootstrap.ps1` is the Windows counterpart: winget installs chezmoi and `Bitwarden.CLI`, then
+`chezmoi init --apply`, SSH key (named by the `work` flag, ACL restricted to the user), GPG import if a
+`gpg.exe` is on `PATH`, atuin login and sync. It does not pull the restic env because nothing schedules
+restic on Windows.
 
 ## Per-machine override files (never managed)
 

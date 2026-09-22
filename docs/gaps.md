@@ -9,26 +9,30 @@ Severity: **High** = something is broken or lands on machines that should not ge
 
 | ID | Sev | Profiles | Summary | Status |
 |---|---|---|---|---|
-| [G-01](#g-01) | High | Linux | Tools the configs depend on are never installed (delta, eza, lazygit, gh, direnv, …) | open |
-| [G-02](#g-02) | High | Linux | Neovim config needs 0.11+, distros ship 0.7–0.9 | open |
-| [G-03](#g-03) | High | macOS work, macOS headless | Brewfile is not profile-aware: every cask on every Mac | open |
-| [G-04](#g-04) | High | macOS | brew-sync re-appends commented lines; 6 duplicates, two cask-name pairs | open |
-| [G-05](#g-05) | High | Windows | No auto-update, no bootstrap, signing key never provisioned, nvim config in wrong place | open |
-| [G-06](#g-06) | Medium | Linux (Arch, Alpine) | Debian package names break pacman/apk; dead headless branch | open |
-| [G-07](#g-07) | Medium | all | `authorized_keys` needs GitHub at every apply; personal keys land on work boxes | open |
-| [G-08](#g-08) | Medium | work | Work profile expects `id_ed25519_skenmy` / `_eit`; bootstrap writes `id_ed25519` | open |
-| [G-09](#g-09) | Medium | macOS headless | No restic backup on headless Macs — intentional? | decision needed |
-| [G-10](#g-10) | Medium | docs | README drift (GPG vs SSH signing, themes, age, agents) | open |
-| [G-11](#g-11) | Medium | macOS desktop | VS Code settings hard-code `/Users/paul` | open |
-| [G-12](#g-12) | Medium | repo | No CI or pre-commit on the repo itself | partly fixed by the docs workflow |
-| [G-13](#g-13) | Low | all | Neovim `<C-j>`/`<C-k>` mapped twice | open |
-| [G-14](#g-14) | Low | all | pre-commit defaults pin 2024 revisions | open |
-| [G-15](#g-15) | Low | Windows | Four bash `run_onchange` scripts have no OS guard | open |
-| [G-16](#g-16) | Low | all | Identity emails hard-coded in four places | open |
-| [G-17](#g-17) | Low | Linux desktop | tmux copy assumes `pbcopy`/`xclip`; no Wayland; no Nerd Font installed | open |
-| [G-18](#g-18) | Low | macOS | brew-sync commits unsigned, straight to `main` | accepted trade-off, revisit |
-| [G-19](#g-19) | Low | Linux | `chsh` to zsh is manual | open |
-| [G-20](#g-20) | Low | all | `me:` URL shortcut renders to `paulwilliams/`, not `skenmy/` | open |
+| [G-01](#g-01) | High | Linux | Tools the configs depend on are never installed (delta, eza, lazygit, gh, direnv, …) | **fixed** — GitHub release binaries into `~/.local/bin` |
+| [G-02](#g-02) | High | Linux | Neovim config needs 0.11+, distros ship 0.7–0.9 | **fixed** — upstream tarball to `~/.local/nvim` when distro nvim < 0.11 |
+| [G-03](#g-03) | High | macOS work, macOS headless | Brewfile is not profile-aware: every cask on every Mac | **fixed** — fragments in `.chezmoitemplates/brew/` |
+| [G-04](#g-04) | High | macOS | brew-sync re-appends commented lines; 6 duplicates, two cask-name pairs | **fixed** — name-based diff, Brewfile deduped |
+| [G-05](#g-05) | High | Windows | No auto-update, no bootstrap, signing key never provisioned, nvim config in wrong place | **fixed** — Scheduled Task, `bootstrap.ps1`, XDG_CONFIG_HOME, ControlMaster guard |
+| [G-06](#g-06) | Medium | Linux (Arch, Alpine) | Debian package names break pacman/apk; dead headless branch | **fixed** — per-manager names; headless branch now gates Zed + font |
+| [G-07](#g-07) | Medium | all | `authorized_keys` needs GitHub at every apply; personal keys land on work boxes | **fixed** — unmanaged on work; 168h API cache |
+| [G-08](#g-08) | Medium | work | Work profile expects `id_ed25519_skenmy` / `_eit`; bootstrap writes `id_ed25519` | **fixed** — bootstrap names the key by the work flag |
+| [G-09](#g-09) | Medium | macOS headless | No restic backup on headless Macs — intentional? | **fixed** — decided: headless Macs are backed up |
+| [G-10](#g-10) | Medium | docs | README drift (GPG vs SSH signing, themes, age, agents) | **fixed** |
+| [G-11](#g-11) | Medium | macOS desktop | VS Code settings hard-code `/Users/paul` | **fixed** — VS Code management removed; Zed replaces it |
+| [G-12](#g-12) | Medium | repo | No CI or pre-commit on the repo itself | **fixed** — `ci.yml`: pre-commit, per-OS/profile render, shellcheck, assertions |
+| [G-13](#g-13) | Low | all | Neovim `<C-j>`/`<C-k>` mapped twice | **fixed** — quickfix on `]q`/`[q` |
+| [G-14](#g-14) | Low | all | pre-commit defaults pin 2024 revisions | **fixed** — v6.0.0 / v8.30.1 / v2.4.3 |
+| [G-15](#g-15) | Low | Windows | Four bash `run_onchange` scripts have no OS guard | **fixed** — ignored on Windows by target name |
+| [G-16](#g-16) | Low | all | Identity emails hard-coded in four places | **fixed** — `.chezmoidata/identity.toml` |
+| [G-17](#g-17) | Low | Linux desktop | tmux copy assumes `pbcopy`/`xclip`; no Wayland; no Nerd Font installed | **fixed** — `wl-copy` fallback; JetBrainsMono Nerd Font installed on desktops |
+| [G-18](#g-18) | Low | macOS | brew-sync commits unsigned, straight to `main` | **fixed** — commits are signed; unsigned fallback removed |
+| [G-19](#g-19) | Low | Linux | `chsh` to zsh is manual | **fixed** — installer runs `chsh` when interactive |
+| [G-20](#g-20) | Low | all | `me:` URL shortcut renders to `paulwilliams/`, not `skenmy/` | **fixed** — uses `githubUser` |
+| [G-21](#g-21) | Medium | all | `.chezmoiignore` script entries used source names, so they never matched | **fixed** — target names |
+| [G-22](#g-22) | Low | Linux | `import-gpg-key` shebang mangled by a `{{-` trim | **fixed** |
+| [G-23](#g-23) | High | macOS, Linux | A brew-sync merge conflict leaves the source clone mid-rebase; every nightly update then fails silently | **fixed** — workers detect and reset the clone |
+| [G-24](#g-24) | Low | all | codespell `--ignore-words-list` split by YAML; only the first word was ignored | **fixed** — quoted |
 
 ---
 
@@ -44,7 +48,7 @@ zoxide have install blocks. `delta`, `eza`, `lazygit`, `gh` are never installed.
 `git diff`/`git log` print an error before falling back to plain output, and `chezmoi diff` fails outright.
 `ls` keeps its `eza` aliases only because they are guarded; `k`, `tf`, `lzg` are dead aliases.
 
-**Fix options.** (a) Extend the existing `install_release_bin` helper to cover `dandavison/delta`,
+**Fixed.** `install_release_bin` now handles archives and raw binaries and installs delta, eza, lazygit, gh, direnv, yq, tealdeer and xh from GitHub releases; the tealdeer pattern had also never matched its raw-binary assets, so `tldr` was missing too. `btop` moved to the distro list. Kubernetes tooling is still macOS-only by choice. Original options for the record: (a) Extend the existing `install_release_bin` helper to cover `dandavison/delta`,
 `eza-community/eza`, `jesseduffield/lazygit`, `cli/cli`, `direnv/direnv`, `mikefarah/yq`. (b) Install
 Linuxbrew in the Linux script and reuse the Brewfile minus casks (`~/.zprofile` already loads it). Option
 (a) keeps servers lean; (b) unifies the inventory. Either way, gate `core.pager` on `lookPath "delta"`
@@ -59,9 +63,7 @@ Ubuntu 24.04 ships 0.9.5, Debian 12 ships 0.7.2.
 
 **Impact.** On Linux, `nvim` starts with Lua errors and no LSP or tree-sitter.
 
-**Fix.** Install from the upstream release tarball into `~/.local` (or `mise use -g neovim@latest`,
-which uses the GitHub release) instead of the distro package, and pin a minimum in `init.lua` with
-`vim.fn.has("nvim-0.11")` plus a clear message.
+**Fixed.** `neovim` left the distro package list; `install_release_tree` extracts the upstream `nvim-linux-<arch>.tar.gz` to `~/.local/nvim` and symlinks `~/.local/bin/nvim` whenever the nvim on `PATH` is missing or older than 0.11. A version guard in `init.lua` is still a nice-to-have.
 
 ## G-03 — Brewfile is not profile-aware {#g-03}
 
@@ -76,7 +78,7 @@ machine may need a paid licence. Headless Macs pull down GUI apps and fonts they
 "Remove a package for one profile" is currently impossible from source; see the
 [how-to](howto.md#remove-a-package-from-one-profile-only).
 
-**Fix sketch.** Split into fragments and render one `Brewfile` from a template:
+**Fixed.** `Brewfile` is now rendered by `Brewfile.tmpl` from three fragments, and brew-sync diffs against their union and appends to the fragment named in `~/.config/dotfiles/brew-sync-target` (templated: `common` on work Macs, `personal` elsewhere). Original sketch kept for the record:
 
 ```
 Brewfile.tmpl:
@@ -99,10 +101,7 @@ on whole lines. Original lines such as `brew "tealdeer"       # fast tldr pages`
 run added `cask "claude-code@latest"` next to `cask "claude-code"` and `cask "tailscale-app"` next to
 `cask "tailscale"`, so each Mac now tries to install both variants.
 
-**Fix.** Normalise before comparing: strip trailing comments and whitespace (`sed -E 's/[[:space:]]*#.*$//'`)
-and compare the `kind "name"` token only. Then dedupe the Brewfile by hand once and pick one cask name
-per pair (`brew info --cask tailscale tailscale-app claude-code claude-code@latest` shows which are
-current).
+**Fixed.** `normalise()` in `dotfiles-brew-sync` reduces every line to `kind "name"` before comparing. The fragments were deduped by hand; `brew info` showed `tailscale-app` and `claude-code@latest` as the live casks, so `tailscale` and `claude-code` were dropped. `brew bundle` will not uninstall the stale variants on machines that already have them.
 
 ## G-05 — Windows is a second-class profile {#g-05}
 
@@ -119,11 +118,16 @@ current).
 - `~/.ssh/config` sets `ControlMaster`/`ControlPath`, which Windows OpenSSH does not support.
 - `~/.config/dotfiles/tips` and `~/.config/direnv/direnvrc` are deployed with nothing to consume them.
 
-**Fix.** Add `run_once_after_register-update-task.ps1.tmpl` using `Register-ScheduledTask`; write
-`scripts/bootstrap.ps1` (Bitwarden CLI is available via winget as `Bitwarden.CLI`); wrap the
-`ControlMaster` block in `{{ if ne .chezmoi.os "windows" }}`; either set `$env:XDG_CONFIG_HOME = "$HOME\.config"`
-in the PowerShell profile or add a Windows-only `AppData/Local/nvim` source; ignore `.config/direnv`
-and `.config/dotfiles` on Windows.
+**Fixed.** `run_onchange_after_install-update-task.ps1.tmpl` registers the per-user Scheduled Task
+`skenmy-chezmoi-update` (daily 03:17, runs when logged on, catches up after sleep) driving the new
+`~/.local/bin/chezmoi-update-and-notify.ps1` worker, and sets `XDG_CONFIG_HOME=%USERPROFILE%\.config`
+user-wide (the PowerShell profile also sets it per session) so Neovim, atuin and mise read the same
+`~/.config` tree as on macOS/Linux. `scripts/bootstrap.ps1` installs chezmoi + `Bitwarden.CLI`, runs
+`chezmoi init --apply`, writes the SSH key (named by the `work` flag), imports GPG when a `gpg.exe`
+exists, and logs atuin in. `ControlMaster`/`ControlPath`/`ControlPersist` are wrapped in
+`{{ if ne .chezmoi.os "windows" }}`. `.config/direnv`, `.config/dotfiles`, `.config/pre-commit`, the
+bash workers and every bash run script are ignored on Windows. Still absent on Windows by choice:
+restic, tmux, tips, `gh dash`, tealdeer cache refresh.
 
 ## G-06 — Linux installer portability {#g-06}
 
@@ -132,8 +136,7 @@ appends `|| true`, so on Arch the whole transaction fails and nothing installs, 
 has no `|| true` under `set -e`, so the run_once aborts on Alpine. The `{{ if not .headless }}` /
 `{{ else }}` blocks around `COMMON_PKGS+=` are identical, so headless has no effect on Linux packages.
 
-**Fix.** A per-manager name map (`declare -A`) or install `fd`/`bat` from release binaries everywhere.
-Delete the dead headless branch or give it a purpose (skip `neovim`, `ripgrep`, `bat` on servers).
+**Fixed.** Each `install_<manager>` passes its own spelling (`fd-find`/`xz-utils` on apt, `fd-find`/`xz` on dnf, `fd`/`xz` on pacman and apk) and `--needed` on pacman; failures are logged and the script continues with a summary. The headless branch now gates Zed and the Nerd Font instead of being a no-op.
 
 ## G-07 — `authorized_keys` from GitHub at apply time {#g-07}
 
@@ -143,8 +146,7 @@ Delete the dead headless branch or give it a purpose (skip `neovim`, `ripgrep`, 
 outage the whole apply fails (template error), not just this file. Unauthenticated API calls are limited
 to 60/hour per IP. Separately, the personal GitHub keys become login-authorised on **work** machines.
 
-**Fix.** Gate with `{{ if not .work }}`; set `gitHub.refreshPeriod` in `.chezmoi.toml.tmpl` (chezmoi caches
-`gitHubKeys` responses when a refresh period is set); consider a `GITHUB_TOKEN` for the rate limit.
+**Fixed.** `.ssh/authorized_keys` is listed in `.chezmoiignore` under `{{ if .work }}`, so chezmoi stops managing it on employer machines without touching whatever is there. `.chezmoi.toml.tmpl` sets `gitHub.refreshPeriod = "168h"` so `gitHubKeys` is served from cache between weekly refreshes; **existing boxes only pick that up after `chezmoi init`** (re-renders the config, keeps prompt answers). Remaining risk: a brand-new personal box with no cache and no network still fails its first apply, which is acceptable.
 
 ## G-08 — Work profile key names vs bootstrap {#g-08}
 
@@ -153,78 +155,116 @@ to 60/hour per IP. Separately, the personal GitHub keys become login-authorised 
 `~/.ssh/id_ed25519` (`SSH_ITEM=ssh/personal/id_ed25519`, name taken from the item). Nothing provisions
 the EIT key or documents how to.
 
-**Fix.** In `install_ssh`, read `work` from `chezmoi data` (or a `--work` flag) and write to
-`id_ed25519_skenmy` when set; add a README/how-to step for placing `id_ed25519_eit` from 1Password.
+**Fixed.** `bootstrap.sh` now runs `chezmoi init --apply` first, then `install_ssh` reads `work` from `chezmoi data` and writes `~/.ssh/id_ed25519_skenmy` on work boxes (`id_ed25519` otherwise), prints a reminder to place the EIT key from 1Password, and runs `chezmoi apply` again so `build-allowed-signers` (whose hash now includes whether the key files exist) rebuilds `allowed_signers`.
 
 ## G-09 — Headless Macs have no backup {#g-09}
 
 **Evidence.** `com.skenmy.restic-backup.plist.tmpl` and `install-restic-units` are gated
 `and (eq .chezmoi.os "darwin") (not .headless)`; the Linux units are not headless-gated.
 
-**Decision needed.** If a headless Mac (mini, build box) holds nothing worth keeping, record that here
-and on the Profiles page. If not, drop the `(not .headless)` from both files.
+**Fixed (decision: back them up).** The `(not .headless)` gate was dropped from the restic plist and from
+`install-restic-units`, so every Mac with a `~/.config/restic/env` gets the 04:32 job. brew-sync stays
+desktop-only.
 
 ## G-10 — README drift {#g-10}
 
-`README.md` still says: GPG-signed commits and `signingKey → user.signingkey` (now SSH signing, the
-value is a flag); starship "Gruvbox-dark" (Catppuccin Mocha); Ghostty "TokyoNight" (Catppuccin Mocha);
-chezmoi-encrypted files "via the existing `~/.age-key`" (no `[age]` section exists); "macOS uses
-Keychain + 1Password SSH agent" (now 1Password on work, Bitwarden on personal). The
-`.chezmoi.toml.tmpl` prompt text still says "GPG signing key". `CLAUDE.md` is current.
+**Fixed.** README now describes SSH signing and the `signingKey` switch, Catppuccin Mocha for starship and
+Ghostty, the per-profile SSH agents, and notes that age encryption is not configured. The `signingKey`
+prompt text explains what the value does.
 
 ## G-11 — VS Code settings hard-code a username {#g-11}
 
-Four `parallels-desktop.*` keys reference `/Users/paul/…` and `/usr/local/bin/prlctl`. This machine's
-home is `/Users/pwilliams`. Make `settings.json` a `.tmpl` using `{{ .chezmoi.homeDir }}`, or drop the
-Parallels keys and let the extension re-detect.
+**Fixed by removal.** VS Code settings and the extensions installer were deleted when Zed became the
+managed editor (2026-09-22). Zed's settings template contains no machine-specific paths.
 
 ## G-12 — No CI on the repo {#g-12}
 
-Before the docs workflow there was no `.github/`. Nothing shellchecks the 13 scripts, renders the
-templates for each OS, or runs the repo's own pre-commit defaults. Suggested additions to
-`.github/workflows/`: `shellcheck` over `scripts/` and `dot_local/private_bin/`; `chezmoi --source . execute-template`
-smoke renders with `--promptBool headless=true,work=true`; a `.pre-commit-config.yaml` copied from
-`dot_config/pre-commit/skenmy-defaults.yaml`.
+**Fixed.** `.github/workflows/ci.yml` runs on every push and PR: (1) `pre-commit run --all-files` with the
+repo's own `.pre-commit-config.yaml` (the shipped defaults plus shellcheck on the workers); (2) a
+`render` matrix over ubuntu/macos/windows × two profiles (`desktop-personal`: headless=false, work=false;
+`server-work`: headless=true, work=true) that runs `chezmoi init` from `.chezmoi.toml.tmpl` with the
+prompt answers supplied by flag, `chezmoi managed`, a full `apply --dry-run` render of every file, a
+render + shellcheck of every `run_*.sh.tmpl` (unix) or a PowerShell parse of every `.ps1.tmpl` (Windows),
+and profile assertions (Brewfile only on macOS, `.gitconfig-eit` only when `work`, `authorized_keys`
+never when `work`, no Zed config when `headless`, Zed settings under `AppData` on Windows). The baseline
+run surfaced G-22 and G-24.
 
 ## G-13 — Neovim `<C-j>` / `<C-k>` double-mapped {#g-13}
 
-`keymaps.lua` maps them to window navigation, then to quickfix next/prev. The later mapping wins, so
-moving between splits vertically does not work. Move quickfix to `]q` / `[q`.
+**Fixed.** Quickfix next/prev moved to `]q` / `[q`; `<C-j>`/`<C-k>` navigate windows again.
 
 ## G-14 — pre-commit defaults pinned to 2024 {#g-14}
 
-`pre-commit-hooks v5.0.0`, `gitleaks v8.18.4`, `codespell v2.3.0`. Run `pre-commit autoupdate` on the
-defaults file periodically.
+**Fixed.** Bumped to `pre-commit-hooks v6.0.0`, `gitleaks v8.30.1`, `codespell v2.4.3` (2026-09-22); the
+file header now carries the `pre-commit autoupdate -c …` one-liner for next time.
 
 ## G-15 — Unguarded bash scripts on Windows {#g-15}
 
-`build-allowed-signers`, `import-gpg-key`, `install-gh-extensions`, `update-tldr-cache` have no OS guard.
-chezmoi on Windows runs `.sh` scripts through `sh` only if one is on `PATH` (Git for Windows); otherwise
-apply errors. Wrap each in `{{ if ne .chezmoi.os "windows" }}`.
+**Fixed.** All eight bash run scripts are listed in the Windows block of `.chezmoiignore` under their
+chezmoi target names (see G-21), so Windows never attempts them. Consequence: no GPG import,
+`allowed_signers` rebuild, `gh dash` or tealdeer refresh on Windows; `bootstrap.ps1` covers GPG.
 
 ## G-16 — Identity emails hard-coded {#g-16}
 
-`pwilliams@eit.org` appears in `build-allowed-signers`, the git hook, `dot_gitconfig-eit` and
-`starship.toml`; `paul@skenmy.com` in `starship.toml` and as a prompt default. One `eitEmail` value in
-`.chezmoi.toml.tmpl` `[data]` would let every template reference it.
+**Fixed.** `.chezmoidata/identity.toml` (versioned, merged into template data automatically, no re-init) defines `githubUser` and `workEmail`. `dot_gitconfig-eit`, the git hook, `starship.toml` and `build-allowed-signers` became templates that reference them; the personal pill uses the `email` prompt value.
 
 ## G-17 — Linux desktop polish {#g-17}
 
-tmux copy pipes to `pbcopy` or `xclip` (no `wl-copy` for Wayland). No Nerd Font is installed on Linux,
-so starship/eza glyphs render as boxes in a local terminal (fine over SSH from a Mac).
+**Fixed.** tmux copy tries `pbcopy`, then `wl-copy`, then `xclip`. Linux desktops get JetBrainsMono Nerd Font in `~/.local/share/fonts/JetBrainsMonoNerdFont` with `fc-cache`.
 
 ## G-18 — brew-sync bypasses PR and signing {#g-18}
 
-Nightly commits are unsigned and pushed straight to `main`, which otherwise enforces signed commits via
-PR. Documented and accepted in the README. Alternatives if it ever matters: push to a `brew-sync` branch
-and open a PR with `gh pr create --fill`, or allow the sync script to sign with the on-disk SSH key.
+**Fixed.** `dotfiles-brew-sync` now commits with the machine's normal git config, so commits are SSH-signed. If signing fails under launchd (key unavailable), the change stays staged and is retried on the next run; there is no unsigned fallback. Commits still land directly on `main` by design.
 
 ## G-19 — Default shell on Linux {#g-19}
 
-zsh is installed but `chsh` is left to the user (README says so). Could be automated in the run_once
-with `chsh -s "$(command -v zsh)"` when `$SHELL` is not zsh.
+**Fixed.** The installer runs `chsh -s $(command -v zsh)` when stdin is a terminal and `$SHELL` is not zsh; non-interactive applies skip it and print nothing.
+
+## G-22 — `import-gpg-key` shebang mangled {#g-22}
+
+**Evidence.** The template began `#!/usr/bin/env bash` followed by a `{{- /* … */ -}}` comment; the leading
+`-` trimmed the newline after the shebang, so the rendered first line was
+`#!/usr/bin/env bash# gpg-public-key.asc hash: …`. macOS splits shebang arguments and still ran `bash`,
+so nothing failed there; Linux passes the rest of the line as one argument, so `env` would look for a
+program literally named `bash# gpg-public-key.asc …`. Found by shellcheck (SC2096) in the CI baseline.
+
+**Fixed.** The template comment became a plain `#` comment on its own line.
+
+## G-23 — stuck source clone disables nightly updates {#g-23}
+
+**Evidence.** On this work Mac `~/.local/state/chezmoi-update/last.log` showed `chezmoi update exited 1`
+every night from 2026-09-20: *Pulling is not possible because you have unmerged files*. The clone at
+`~/.local/share/chezmoi` was detached mid-rebase with `UU Brewfile`: two Macs' brew-sync runs had appended
+to the same lines the same night, the pull-with-rebase stopped on the conflict, and nothing recovered or
+alerted. Every later `chezmoi update` (a pull followed by apply) failed until noticed.
+
+**Fixed.** Both workers treat the clone as disposable, since `origin/main` is the truth.
+`chezmoi-update-and-notify` checks for a rebase in progress or unmerged status entries before and after
+`chezmoi update`; if found it aborts the rebase, returns to `main` at `origin/main`, drops autostash
+leftovers, logs what it did and retries once. `dotfiles-brew-sync` does the same when its own pull fails
+and re-detects the drift the next night. The affected Mac had to be recovered by hand once (abort the
+rebase, switch back to `main`, discard the conflicted Brewfile, fast-forward).
+
+## G-24 — codespell ignore list split by YAML {#g-24}
+
+**Evidence.** `args: [--ignore-words-list=crate,hist]` is a YAML flow sequence; commas separate items, so
+codespell received `--ignore-words-list=crate` plus `hist` as a file path. The shipped defaults had the
+bug; the repo's own config inherited it and failed on `fpr` in `seed-bitwarden.sh` until diagnosed.
+
+**Fixed.** Quoted in both files: `args: ["--ignore-words-list=…"]`, with a comment explaining why.
+
+## G-21 — `.chezmoiignore` script entries never matched {#g-21}
+
+**Evidence.** Found while adding Windows entries: `chezmoi managed` still listed `install-packages-windows.ps1`
+on macOS despite `run_once_install-packages-windows.ps1` being in `.chezmoiignore`. chezmoi strips the
+`run_once_`/`run_onchange_`/`before_`/`after_` attributes to form a script's **target name**, and
+`.chezmoiignore` matches target names. The original darwin/linux entries were therefore inert; nothing
+broke only because every script also had an OS guard inside its template that rendered it empty.
+
+**Fixed.** All script entries use target names (`install-packages-darwin.sh`, `brew-bundle.sh`, …), a
+comment at the top of `.chezmoiignore` explains the rule, and the generated
+[file inventory](generated/files.md) now shows the target name for every script so the two can be compared.
 
 ## G-20 — `me:` shortcut renders the wrong owner {#g-20}
 
-`[url "git@github.com:{{ .name | replace " " "" | lower }}/"] insteadOf = "me:"` renders to
-`paulwilliams/`, but the GitHub account is `skenmy`. Use a dedicated `githubUser` data value.
+**Fixed.** The `me:` shortcut now renders from `{{ .githubUser }}` → `git@github.com:skenmy/`.

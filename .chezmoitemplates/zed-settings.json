@@ -1,0 +1,46 @@
+// Zed settings — managed by chezmoi (skenmy/dotfiles). Edit the source
+// template .chezmoitemplates/zed-settings.json, not this file.
+// Docs: https://zed.dev/docs/configuring-zed
+// `zed: open default settings` in the command palette shows every default.
+{
+  "base_keymap": "VSCode",
+  "theme": {
+    "mode": "dark",
+    "light": "Ayu Light",
+    "dark": "Ayu Dark"
+  },
+  "icon_theme": "Colored Zed Icons Theme Dark",
+  "ui_font_size": 16,
+  "buffer_font_size": 15,
+  "buffer_font_family": "JetBrainsMono Nerd Font",
+
+  "autosave": "on_focus_change",
+  "format_on_save": "on",
+  "cli_default_open_behavior": "existing_window",
+  "minimap": { "show": "always" },
+  "session": { "trust_all_worktrees": true },
+
+  // Panels: everything on the right, agent on the left.
+  "project_panel": { "dock": "right" },
+  "outline_panel": { "dock": "right" },
+  "collaboration_panel": { "dock": "right" },
+  "git_panel": { "dock": "right" },
+  "agent": { "dock": "left" },
+  "agent_servers": {
+    "claude-acp": { "type": "registry" }
+  },
+
+  // Extensions Zed installs itself on first launch (no separate installer
+  // script needed). Add a line here to roll an extension out everywhere.
+  "auto_install_extensions": {
+    "colored-zed-icons-theme": true,
+    "html": true,
+    "latex": true,
+    "log": true,
+    "mcp-server-context7": true,
+    "pylsp": true,
+    "python-requirements": true,
+    "rainbow-csv": true,
+    "terraform": true
+  }
+}

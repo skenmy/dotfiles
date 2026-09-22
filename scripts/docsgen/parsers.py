@@ -26,6 +26,7 @@ class BrewEntry:
     note: str
     section: str
     line: int
+    fragment: str = ""
 
     @property
     def key(self) -> str:
@@ -36,8 +37,11 @@ class BrewEntry:
         return bool(AUTO_SYNCED.match(self.section))
 
 
-def parse_brewfile(text: str) -> list[BrewEntry]:
-    """Return every package line with its nearest preceding comment as section."""
+def parse_brewfile(text: str, fragment: str = "") -> list[BrewEntry]:
+    """Return every package line with its nearest preceding comment as section.
+
+    `fragment` labels which Brewfile fragment the text came from.
+    """
     entries: list[BrewEntry] = []
     section = "Unsectioned"
     for number, raw in enumerate(text.splitlines(), start=1):
@@ -51,7 +55,7 @@ def parse_brewfile(text: str) -> list[BrewEntry]:
         match = BREW_LINE.match(line)
         if match:
             kind, name, note = match.groups()
-            entries.append(BrewEntry(kind, name, (note or "").strip(), section, number))
+            entries.append(BrewEntry(kind, name, (note or "").strip(), section, number, fragment))
     return entries
 
 
@@ -145,6 +149,23 @@ def parse_tips(text: str) -> list[tuple[str, str]]:
         elif line and not line.startswith("#"):
             tips.append((section, line))
     return tips
+
+
+# --------------------------------------------------------------------------
+# Zed settings (JSON with comments)
+# --------------------------------------------------------------------------
+
+AUTO_INSTALL_BLOCK = re.compile(r'"auto_install_extensions"\s*:\s*\{(.*?)\}', re.DOTALL)
+JSONC_COMMENT = re.compile(r"^\s*//.*$", re.MULTILINE)
+
+
+def parse_zed_extensions(text: str) -> list[tuple[str, bool]]:
+    """Return (extension, enabled) pairs from Zed's auto_install_extensions block."""
+    body = JSONC_COMMENT.sub("", text)
+    match = AUTO_INSTALL_BLOCK.search(body)
+    if not match:
+        return []
+    return [(name, flag == "true") for name, flag in re.findall(r'"([^"]+)"\s*:\s*(true|false)', match.group(1))]
 
 
 # --------------------------------------------------------------------------
@@ -253,6 +274,7 @@ def parse_tmux_plugins(text: str) -> list[str]:
 # --------------------------------------------------------------------------
 
 SCRIPT_PREFIXES = ("run_once_", "run_onchange_", "run_")
+SCRIPT_ORDER_PREFIXES = ("before_", "after_")
 COMPONENT_PREFIXES = (
     "private_", "readonly_", "executable_", "exact_", "symlink_", "modify_",
     "create_", "remove_", "empty_", "encrypted_", "literal_",
@@ -284,13 +306,30 @@ def _strip_component(component: str) -> tuple[str, bool, bool]:
     return name, is_private, is_executable
 
 
+def script_target_name(filename: str) -> str:
+    """chezmoi's target name for a run script: run_/once_/onchange_/before_/after_ stripped.
+
+    This is the name .chezmoiignore must use (e.g. `install-packages-darwin.sh`).
+    """
+    name = filename
+    for prefix in SCRIPT_PREFIXES:
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+            break
+    for prefix in SCRIPT_ORDER_PREFIXES:
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+            break
+    return name
+
+
 def source_to_target(source_path: str) -> TargetInfo:
     """Map a chezmoi source path to the destination it renders to."""
     is_template = source_path.endswith(".tmpl")
     path = source_path[: -len(".tmpl")] if is_template else source_path
     components = path.split("/")
     if components[-1].startswith(SCRIPT_PREFIXES):
-        return TargetInfo(components[-1], is_template, False, True, True)
+        return TargetInfo(script_target_name(components[-1]), is_template, False, True, True)
     cleaned: list[str] = []
     is_private = is_executable = False
     for component in components:

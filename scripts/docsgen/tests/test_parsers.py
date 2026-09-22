@@ -39,6 +39,15 @@ tap "fluxcd/tap"
         self.assertFalse(entries[0].is_auto_synced)
         self.assertTrue(entries[4].is_auto_synced)
 
+    def test_fragment_label_is_carried_and_defaults_empty(self):
+        self.assertEqual(p.parse_brewfile(self.SAMPLE)[0].fragment, "")
+        self.assertEqual(p.parse_brewfile(self.SAMPLE, "gui")[0].fragment, "gui")
+
+    def test_duplicates_are_found_across_fragments(self):
+        entries = [*p.parse_brewfile('brew "zsh"\n', "common"), *p.parse_brewfile('brew "zsh"\n', "personal")]
+        dupes = p.find_duplicates(entries)
+        self.assertEqual([e.fragment for e in dupes['brew "zsh"']], ["common", "personal"])
+
 
 class BashTests(unittest.TestCase):
     SCRIPT = """COMMON_PKGS=(git curl zsh)
@@ -90,6 +99,15 @@ class LineListTests(unittest.TestCase):
 
     def test_tips_before_any_header_land_in_general(self):
         self.assertEqual(p.parse_tips("tip zero\n"), [("General", "tip zero")])
+
+
+class ZedTests(unittest.TestCase):
+    def test_auto_install_extensions_with_comments(self):
+        text = '{\n  // note\n  "auto_install_extensions": {\n    "html": true, // trailing\n    "latex": false\n  },\n  "other": { "x": true }\n}'
+        self.assertEqual(p.parse_zed_extensions(text), [("html", True), ("latex", False)])
+
+    def test_missing_block_returns_empty(self):
+        self.assertEqual(p.parse_zed_extensions('{"theme": "x"}'), [])
 
 
 class MacosDefaultsTests(unittest.TestCase):
@@ -147,10 +165,12 @@ class ChezmoiNamingTests(unittest.TestCase):
         self.assertTrue(info.is_executable)
         self.assertTrue(info.is_private)
 
-    def test_scripts_have_no_target(self):
+    def test_scripts_use_chezmoi_target_name(self):
         info = p.source_to_target("run_onchange_after_brew-bundle.sh.tmpl")
         self.assertTrue(info.is_script)
-        self.assertEqual(info.target, "run_onchange_after_brew-bundle.sh")
+        self.assertEqual(info.target, "brew-bundle.sh")
+        self.assertEqual(p.script_target_name("run_once_install-packages-darwin.sh"), "install-packages-darwin.sh")
+        self.assertEqual(p.script_target_name("run_once_after_macos-defaults.sh"), "macos-defaults.sh")
 
     def test_plain_files_keep_their_name(self):
         self.assertEqual(p.source_to_target("Brewfile").target, "~/Brewfile")

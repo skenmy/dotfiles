@@ -1,0 +1,27 @@
+{{- if eq .chezmoi.os "windows" -}}
+# Register the daily dotfiles update as a per-user Scheduled Task and make
+# ~/.config the XDG config home so Neovim/atuin/mise read the same paths as
+# on macOS/Linux. Re-runs when this file or the worker changes.
+# worker hash: {{ include "dot_local/private_bin/chezmoi-update-and-notify.ps1" | sha256sum }}
+$ErrorActionPreference = 'Stop'
+
+$worker = Join-Path $HOME '.local\bin\chezmoi-update-and-notify.ps1'
+$shell = Get-Command pwsh -ErrorAction SilentlyContinue
+if (-not $shell) { $shell = Get-Command powershell }
+
+$action    = New-ScheduledTaskAction -Execute $shell.Source `
+                -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$worker`""
+$trigger   = New-ScheduledTaskTrigger -Daily -At 03:17
+$settings  = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAvailable `
+                -ExecutionTimeLimit (New-TimeSpan -Hours 1)
+$principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
+
+Register-ScheduledTask -TaskName 'skenmy-chezmoi-update' -Action $action -Trigger $trigger `
+    -Settings $settings -Principal $principal -Force | Out-Null
+Write-Host "==> Scheduled Task 'skenmy-chezmoi-update' registered (daily 03:17, runs when logged on)"
+
+$xdg = Join-Path $HOME '.config'
+[Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', $xdg, 'User')
+$env:XDG_CONFIG_HOME = $xdg
+Write-Host "==> XDG_CONFIG_HOME=$xdg (user environment; new shells pick it up)"
+{{ end -}}

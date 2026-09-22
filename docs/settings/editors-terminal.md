@@ -1,7 +1,7 @@
 # Editors & terminal
 
-*Reviewed against `ada9e1c`, 2026-09-22.* Files: `dot_config/nvim/**`, `dot_config/ghostty/config`,
-`Library/Application Support/Code/User/settings.json`, `dot_config/code/extensions.txt`.
+*Reviewed against `1e30dcf` + `feat/zed-everywhere`, 2026-09-22.* Files: `dot_config/nvim/**`, `dot_config/ghostty/config`,
+`.chezmoitemplates/zed-settings.json` (rendered to `~/.config/zed/settings.json` and, on Windows, `~/AppData/Roaming/Zed/settings.json`).
 
 ## Neovim
 
@@ -21,7 +21,8 @@ no `hlsearch`, splits open right/below, persistent undo, no swap or backup, `upd
 | `<Esc>` | clear search highlight |
 | `<leader>w` / `<leader>q` | save / quit |
 | `<C-h>` `<C-l>` | window left / right |
-| `<C-j>` `<C-k>` | defined twice: window down/up **and** quickfix next/prev. The quickfix mapping wins ([G-13](../gaps.md#g-13)) |
+| `<C-j>` `<C-k>` | window down / up |
+| `]q` `[q` | quickfix next / previous |
 | `J` / `K` (visual) | move selection down / up |
 | `<C-d>` `<C-u>` `n` `N` | keep cursor centred |
 | `<leader>p` (visual) | paste without yanking |
@@ -54,20 +55,26 @@ Colourscheme tokyonight *night*; lualine themed to match. Plugins, LSP servers a
 
 Shell integration left at Ghostty's auto-detect defaults.
 
-## VS Code (macOS desktop only)
+## Zed (every desktop profile)
 
-`settings.json` is a static file, not a template:
+Zed replaced VS Code as the GUI editor on 2026-09-22. One template, `.chezmoitemplates/zed-settings.json`,
+renders to `~/.config/zed/settings.json` on macOS and Linux and to `~/AppData/Roaming/Zed/settings.json`
+on Windows. Skipped on `headless` (Zed needs a GPU). Installed by the `gui.Brewfile` cask, the
+`ZedIndustries.Zed` winget package, and `zed.dev/install.sh` on Linux desktops.
 
 | Setting | Value |
 |---|---|
-| `workbench.startupEditor` | `none` |
-| `explorer.confirmDragAndDrop` / `confirmDelete` | false / false |
-| `git.enableSmartCommit` / `autofetch` / `confirmSync` | true / true / false |
-| `githubPullRequests.pushBranch` | `always` |
-| `files.autoSave` | `onFocusChange` |
-| `editor.defaultFormatter` / `formatOnSave` | Prettier / true |
-| JS/TS semicolons | `insert` |
-| `parallels-desktop.*` paths | hard-coded `/Users/paul/…` and `/usr/local/bin/prlctl` ([G-11](../gaps.md#g-11)) |
+| `base_keymap` | `VSCode` |
+| `theme` | dark mode, Ayu Dark / Ayu Light |
+| `icon_theme` | Colored Zed Icons Theme Dark (from the extension below) |
+| `ui_font_size` / `buffer_font_size` / `buffer_font_family` | 16 / 15 / JetBrainsMono Nerd Font |
+| `autosave` / `format_on_save` | `on_focus_change` / `on` |
+| `cli_default_open_behavior` | `existing_window` |
+| `minimap.show` | `always` |
+| `session.trust_all_worktrees` | `true` |
+| Panels | project, outline, collaboration and git docked right; agent docked left |
+| `agent_servers` | `claude-acp` from the registry |
+| `auto_install_extensions` | Zed installs these itself on launch: [generated list](../generated/zed-extensions.md) |
 
-Extensions (25) are installed from `~/.config/code/extensions.txt` when the list changes, only if the
-`code` CLI is on `PATH`. Append-only: local installs never flow back. [Generated list](../generated/vscode-extensions.md).
+There is no separate extension installer script any more; add a line to `auto_install_extensions` and
+push. `EDITOR`/`VISUAL` stay `nvim` for terminal use; `git config core.editor` too.

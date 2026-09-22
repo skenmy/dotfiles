@@ -5,7 +5,7 @@
 # script hash: {{ include "dot_local/private_bin/executable_restic-backup" | sha256sum }}
 set -uo pipefail
 
-{{- if and (eq .chezmoi.os "darwin") (not .headless) }}
+{{- if eq .chezmoi.os "darwin" }}
 PLIST="$HOME/Library/LaunchAgents/com.skenmy.restic-backup.plist"
 if [ -f "$PLIST" ]; then
     echo "==> (re)loading $PLIST"

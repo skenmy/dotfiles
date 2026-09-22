@@ -297,19 +297,18 @@ format = '[[ $symbol$context(\($namespace\)) ](fg:crust bg:sapphire)]($style)'
 detect_files = ["k8s", "kustomization.yaml", "Chart.yaml"]
 detect_folders = [".kube", "helm", "charts"]
 
-# ---- Git identity pills (gated on resolved commit email) ----
+# ---- Git identity pills (gated on resolved commit email; values from chezmoi data) ----
 # Mutually exclusive: only the email git will actually commit as shows a pill.
 [custom.id_eit]
 description = "Show EIT identity inside a repo resolving to the EIT email"
-when = '[ "$(git config user.email 2>/dev/null)" = "pwilliams@eit.org" ]'
+when = '[ "$(git config user.email 2>/dev/null)" = "{{ .workEmail }}" ]'
 command = "echo EIT"
 shell = ["bash", "--noprofile", "--norc"]
 format = "[](fg:peach)[  $output ](fg:crust bg:peach)[](fg:peach)"
 
 [custom.id_personal]
 description = "Show personal identity inside a repo resolving to the personal email"
-when = '[ "$(git config user.email 2>/dev/null)" = "paul@skenmy.com" ]'
+when = '[ "$(git config user.email 2>/dev/null)" = "{{ .email }}" ]'
 command = "echo skenmy"
 shell = ["bash", "--noprofile", "--norc"]
 format = "[](fg:blue)[  $output ](fg:crust bg:blue)[](fg:blue)"
-

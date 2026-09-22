@@ -6,6 +6,7 @@ One source of truth → applied identically to every MacBook, Windows PC, and Li
 
 > **Audit site:** what every profile installs and changes, known gaps, and how to change things —
 > <https://skenmy.github.io/dotfiles/> (built from `docs/` + `scripts/docsgen` by the `docs` workflow).
+> **CI:** `ci.yml` runs pre-commit (incl. shellcheck) and renders every template for each OS × profile on every PR.
 
 ---
 
@@ -43,7 +44,11 @@ Tailscale is installed automatically by `bootstrap.sh` on personal boxes (it's s
 iex "&{$(irm 'https://get.chezmoi.io/ps1')} -b $HOME/.local/bin init --apply skenmy"
 ```
 
-Note: no Bitwarden integration on Windows yet — GPG / SSH / atuin still need importing by hand.
+Or, with Bitwarden secrets (SSH key, GPG, atuin) and the daily update task in one go:
+
+```powershell
+iex "& { $(irm https://raw.githubusercontent.com/skenmy/dotfiles/main/scripts/bootstrap.ps1) }"
+```
 
 **That's it for every-box setup.** Everything below is one-time-ever or optional.
 
@@ -95,7 +100,7 @@ curl -fsSL https://raw.githubusercontent.com/skenmy/dotfiles/main/scripts/bootst
 - Installs Bitwarden CLI (`bw`) if missing.
 - Unlocks the vault — Touch ID via macOS Keychain if the entry `bw-master` exists, otherwise prompts for master password.
 - Pulls **GPG private key** from `gpg/9BFD73704EA02674`, imports it + sets ultimate trust.
-- Pulls **SSH private key** from `ssh/personal/id_ed25519`, writes to `~/.ssh/` with 0600.
+- Pulls **SSH private key** from `ssh/personal/id_ed25519`, writes it with 0600 to `~/.ssh/id_ed25519` (personal) or `~/.ssh/id_ed25519_skenmy` (work boxes, after `chezmoi init` has recorded the flag). The EIT key is a manual copy from 1Password.
 - Stashes **atuin password + encryption key** from `atuin/skenmy.com`, runs `atuin login -u skenmy -p … -k …` after chezmoi has installed atuin, then `atuin import auto && atuin sync -f`.
 
 The schema is whatever `scripts/seed-bitwarden.sh` puts in the vault (see below). All steps are idempotent — re-running is safe.
@@ -120,10 +125,11 @@ You'll be prompted for the Bitwarden master password once. After that, `bootstra
 
 If you `brew install <foo>` on one Mac, you don't want to remember to PR it into the Brewfile. A nightly script handles it:
 
-- **`~/.local/bin/dotfiles-brew-sync`** — runs `brew bundle dump`, diffs against the source `Brewfile`, appends any newly-installed packages under a dated `# auto-synced from <host>` comment, commits, pushes.
+- **`~/.local/bin/dotfiles-brew-sync`** — runs `brew bundle dump`, diffs (by `kind "name"`) against the union of the fragments in `.chezmoitemplates/brew/`, appends any newly-installed packages to this machine's target fragment (`~/.config/dotfiles/brew-sync-target`: `common` on work Macs, `personal` otherwise) under a dated `# auto-synced from <host>` comment, then makes a **signed** commit and pushes.
 - Launchd schedule: 02:00 local, before the 03:17 chezmoi-update — so other Macs pick up the change the same morning.
 - **Append-only by design.** Local uninstalls do *not* remove from Brewfile (removal is intentional and should go via a PR).
-- Per-machine exceptions: `~/.config/dotfiles/brew-sync-ignore` — one extended-regex per line, matched against Brewfile lines. Add `^cask "firefox"$` to keep Firefox on this Mac only.
+- Per-machine exceptions: `~/.config/dotfiles/brew-sync-ignore` — one extended-regex per line, matched against normalised `kind "name"` lines. Add `^cask "firefox"$` to keep Firefox on this Mac only.
+- If signing fails under launchd the change stays staged and is retried the next night; nothing is committed unsigned.
 - Logs at `~/.local/state/dotfiles-brew-sync/last.log`. Run the script ad-hoc to force a sync.
 
 ### Shell tips on every new terminal
@@ -185,7 +191,7 @@ Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. 
   - omz plugins: `git`, `sudo`, `extract`, `colored-man-pages`, `command-not-found`
 
 ### Prompt
-- **starship** (`dot_config/starship.toml`) — Gruvbox-dark palette, OS icon, user, dir, git branch/status, language/runtime, docker, kubernetes, time. Cross-shell (zsh + pwsh).
+- **starship** (`dot_config/starship.toml.tmpl`) — Catppuccin Mocha palette, OS icon, user, dir, git branch/status, language/runtime, docker, kubernetes, time, and a right-hand identity pill (`skenmy` / `EIT`) driven by the resolved commit email. Cross-shell (zsh + pwsh).
 
 ### Runtime version manager
 - **mise** (`dot_config/mise/config.toml`) — replaces nvm/rbenv/pyenv/asdf. Lazy, single binary, project-local `.mise.toml` overrides.
@@ -207,7 +213,7 @@ Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. 
 - **tmux** (`dot_tmux.conf`) — prefix `C-a`, vim-style splits/nav, mouse on, 256-color, large history, status line, TPM auto-bootstrap. Plugins: tmux-sensible, tmux-resurrect, tmux-continuum, tmux-yank, vim-tmux-navigator.
 
 ### Terminal emulator (macOS desktop only)
-- **Ghostty** (`dot_config/ghostty/config`) — JetBrainsMono Nerd Font, TokyoNight theme, cmd-based splits and tabs, shell integration, option-as-alt.
+- **Ghostty** (`dot_config/ghostty/config`) — JetBrainsMono Nerd Font, Catppuccin Mocha theme, cmd+h/j/k/l split navigation, copy-on-select, option-as-alt.
 
 ### Terminal quick-wins
 
@@ -217,12 +223,11 @@ Run `~/.local/bin/chezmoi-update-and-notify` ad-hoc to fire a sync immediately. 
 - **gh-dash** — terminal dashboard for GitHub PRs/issues/repos. Auto-installed via `gh extension install dlvhdr/gh-dash` on apply once `gh` is authed. Run with `gh dash`.
 - **direnv** (`dot_config/direnv/direnvrc`) — global helpers: `layout mise` (use the project's mise toolchain), `dotenv_if_exists`, `use_flake`, `use_op` (pull 1Password secrets into env).
 
-### Editor: VS Code (macOS)
+### Editor: Zed (every desktop)
 
-- **`Library/Application Support/Code/User/settings.json`** — global user settings (formatter, autosave, git auto-fetch, formatOnSave, etc.).
-- **`dot_config/code/extensions.txt`** — one extension ID per line. The `run_onchange_after_install-code-extensions.sh.tmpl` script diffs this against `code --list-extensions` on apply and installs missing ones via `code --install-extension`.
-- Append-only on the extensions file: a local `code --install-extension foo` won't sync back. To propagate, edit the source list directly. (Mirrors the brew-sync philosophy: removals are intentional and live in PRs.)
-- Skipped on `headless=true` boxes (no point installing extensions on a server with no GUI).
+- **`.chezmoitemplates/zed-settings.json`** — one settings file rendered to `~/.config/zed/settings.json` (macOS/Linux) and `~/AppData/Roaming/Zed/settings.json` (Windows). VSCode keymap, Ayu theme, JetBrainsMono Nerd Font, autosave + format on save, panels on the right, Claude agent server.
+- Extensions are declared under `auto_install_extensions` and installed by Zed itself on launch — no installer script.
+- Installed via the `zed` cask (`gui.Brewfile`), `winget install ZedIndustries.Zed`, or `curl -f https://zed.dev/install.sh | sh` on Linux desktops. Skipped on `headless=true` (Zed needs a GPU).
 
 ### Mesh VPN (personal boxes only)
 - **Tailscale** — installed via the Brewfile cask on macOS and the official `install.sh` on Linux. On Linux, install is gated to `work=false` so employer-managed boxes aren't disturbed. Authenticating is interactive (`sudo tailscale up --operator=$USER` on Linux, menu-bar app on macOS) and only needed once per device.
@@ -246,7 +251,7 @@ Nightly snapshot of `$HOME` to a restic repository (B2 / S3 / SFTP / etc.). Encr
 | `~/.local/bin/restic-backup` | Worker. Reads `~/.config/restic/env`, runs `restic backup ~` with sensible flags, then `restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --keep-yearly 3 --prune`. |
 | `~/.config/restic/env.example` | Template — copy to `env`, fill in `RESTIC_REPOSITORY`, `RESTIC_PASSWORD`, and backend creds (B2/S3). `chmod 0600` it. |
 | `~/.config/restic/excludes` | Exclude list — caches, build artefacts, cloud-sync dirs, Downloads/Movies/Music. |
-| `~/Library/LaunchAgents/com.skenmy.restic-backup.plist` (macOS) | Daily at 04:32 local. |
+| `~/Library/LaunchAgents/com.skenmy.restic-backup.plist` (macOS, including headless) | Daily at 04:32 local. |
 | `~/.config/systemd/user/restic-backup.{service,timer}` (Linux) | Same schedule, with 30-min jitter for fleet rollouts. |
 
 **One-time setup per laptop:**
@@ -263,16 +268,16 @@ Logs land in `~/.local/state/restic/last.log`. Run the worker ad-hoc any time to
 > **Back the `RESTIC_PASSWORD` up in Bitwarden.** Losing it bricks your snapshots.
 
 ### Git
-- **`dot_gitconfig.tmpl`** — name/email/signingKey from chezmoi prompts. GPG sign commits and tags. **delta** as pager and interactive diff filter. `init.defaultBranch=main`, `pull.rebase=false`, `push.default=current` with `autoSetupRemote`, `fetch.prune`, `rebase.autoStash`+`autoSquash`, `rerere.enabled`, branches sorted by recent commit, `merge.conflictstyle=zdiff3`, `diff.algorithm=histogram`, `help.autocorrect=prompt`.
+- **`dot_gitconfig.tmpl`** — name/email from chezmoi prompts. Commits and tags are **SSH-signed** (`gpg.format = ssh`) with the on-disk key `~/.ssh/id_ed25519.pub` (`id_ed25519_skenmy.pub` on work boxes); `signingKey` is only the on/off switch. Verified locally via `~/.ssh/allowed_signers`. **delta** as pager and interactive diff filter. `init.defaultBranch=main`, `pull.rebase=false`, `push.default=current` with `autoSetupRemote`, `fetch.prune`, `rebase.autoStash`+`autoSquash`, `rerere.enabled`, branches sorted by recent commit, `merge.conflictstyle=zdiff3`, `diff.algorithm=histogram`, `help.autocorrect=prompt`.
 - URL aliases: `gh:user/repo` → `git@github.com:user/repo`.
 - Aliases: `s`, `co`, `sw`, `cm`, `ca`, `cane`, `lg`, `ls`, `last`, `diffs`, `pushf`, `wip`, `undo`, `cleanup`, `root`, `aliases`, `fixup`, `sync`.
 - **`dot_gitignore_global`** — DS_Store, swap files, .direnv, node_modules, .venv, .env.local, etc.
 
 ### SSH + GPG public keys
-- **`private_dot_ssh/authorized_keys.tmpl`** — applied to `~/.ssh/authorized_keys` (0600 via `private_` prefix). Pulled live from `github.com/skenmy.keys` via chezmoi's `gitHubKeys` template function — add a key on GitHub and the next `chezmoi apply` ships it everywhere. Per-host extras can go in `~/.ssh/authorized_keys.local` (sourced if present).
+- **`private_dot_ssh/authorized_keys.tmpl`** — applied to `~/.ssh/authorized_keys` (0600 via `private_` prefix) on **personal** boxes only (unmanaged on `work=true`). Pulled from `github.com/skenmy.keys` via chezmoi's `gitHubKeys` template function, cached for a week (`gitHub.refreshPeriod`) — add a key on GitHub and it ships within a week, or immediately with `chezmoi apply --refresh-externals`. Per-host extras can go in `~/.ssh/authorized_keys.local` (sourced if present).
 - **`private_dot_ssh/id_rsa.pub`** — public counterpart of the RSA key. Safe to commit.
-- **`private_dot_ssh/config.tmpl`** — `AddKeysToAgent`, control sockets, `accept-new` host key policy, includes `~/.ssh/config.local` for per-host overrides. On macOS, uses Keychain + 1Password SSH agent socket.
-- **`gpg-public-key.asc`** — ASCII-armored export of GPG key `9BFD73704EA02674`. Not deployed as a file; instead `run_onchange_after_import-gpg-key.sh.tmpl` runs `gpg --import` on apply and marks the key as ultimately trusted so signing works out of the box.
+- **`private_dot_ssh/config.tmpl`** — `AddKeysToAgent`, control sockets (not on Windows), `accept-new` host key policy, includes `~/.ssh/config.local` for per-host overrides. SSH agent: 1Password on work boxes, Bitwarden Desktop on personal ones; macOS also uses Keychain. Work boxes pin `github.com` to the on-disk personal key and add a `github-eit` alias.
+- **`gpg-public-key.asc`** — ASCII-armored export of GPG key `9BFD73704EA02674`. Not deployed as a file; instead `run_onchange_after_import-gpg-key.sh.tmpl` runs `gpg --import` on apply and marks the key as ultimately trusted for non-git use (git signing is SSH-based).
 
 > The repo is **public**. Public keys (SSH `.pub`, GPG armored export, `authorized_keys`) are safe to commit by design. Never commit private keys.
 
@@ -289,11 +294,13 @@ Logs land in `~/.local/state/restic/last.log`. Run the worker ad-hoc any time to
 
 ### Brewfile (macOS)
 
+`~/Brewfile` is rendered by `Brewfile.tmpl` from `.chezmoitemplates/brew/common.Brewfile` (every Mac), `gui.Brewfile` (`headless=false`) and `personal.Brewfile` (`work=false`). Edit the fragments, never `~/Brewfile`. Full, always-current inventory: <https://skenmy.github.io/dotfiles/generated/brewfile/>.
+
 CLI: `zsh starship antidote mise direnv fzf zoxide eza bat ripgrep fd jq yq btop tree wget watch tmux neovim lazygit git-delta gh atuin gnupg go node uv ffmpeg tesseract streamlink watchman`.
 
 Kubernetes / infra: `kubernetes-cli helm kustomize kubeseal flux terraform`.
 
-Casks: `ghostty iterm2 raycast docker-desktop spotify telegram claude-code zulu@17 logi-options+ tailscale`. (Headless macOS boxes get the same casks; only the Ghostty *config file* is skipped on headless via `.chezmoiignore`.)
+Casks (gui): `ghostty iterm2 raycast docker-desktop claude-code@latest zulu@17 logi-options+ wireshark-app`. Personal only: `spotify telegram battle-net tailscale-app openclaw` plus `streamlink whisper-cpp yt-dlp ollama`. Headless boxes get no casks.
 
 Fonts: `font-jetbrains-mono-nerd-font font-symbols-only-nerd-font`.
 
@@ -310,7 +317,7 @@ Prompted on first run, stored in `~/.config/chezmoi/chezmoi.toml`:
 |---|---|
 | `name` | git `user.name` |
 | `email` | git `user.email` |
-| `signingKey` | git `user.signingkey` (empty → no GPG signing) |
+| `signingKey` | On/off switch for SSH commit signing (empty → unsigned). The value itself is the GPG key ID given ultimate ownertrust when the public key is imported; git never sees it. |
 | `headless` | Skip GUI configs (Ghostty), skip macOS defaults, suppress cask upgrades |
 | `work` | Personal vs employer-managed. On Linux, gates the auto-install of Tailscale (skipped on work boxes). |
 
@@ -325,7 +332,7 @@ The repo is **public**. Never commit anything secret. Options for per-machine se
 - **Bitwarden + `scripts/bootstrap.sh`** — the bootstrap pulls GPG private key, SSH private keys, and atuin credentials from the vault under fixed item names (`atuin/skenmy.com`, `gpg/<KEY_ID>`, `ssh/personal/<KEY_NAME>`). Seed once with `scripts/seed-bitwarden.sh`. This is the path the TL;DR assumes.
 - **`~/.zshrc.local`** — sourced at the end of `.zshrc`, not tracked. Good for one-off per-machine env vars.
 - **chezmoi templating** with `{{ bitwarden ... }}`, `{{ onepasswordRead ... }}`, or `{{ pass ... }}` — pulls a secret at apply time, so the source remains plaintext but the rendered file isn't.
-- **chezmoi-encrypted files** (via the existing `~/.age-key`) — name a file `encrypted_secret_thing.age.tmpl` and chezmoi decrypts on apply.
+- **chezmoi-encrypted files** — not set up today (no `[age]` section in `.chezmoi.toml.tmpl`); if ever needed, add one and name files `encrypted_*.age`.
 
 ---
 

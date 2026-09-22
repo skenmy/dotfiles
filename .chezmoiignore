@@ -1,17 +1,22 @@
-{{/* Per-OS exclusions */}}
+{{/* Per-OS exclusions. Script entries use chezmoi's TARGET name: run_once_ / run_onchange_ /
+    before_ / after_ prefixes are stripped, so `install-packages-darwin.sh`, not
+    `run_once_install-packages-darwin.sh`. */}}
 {{- if ne .chezmoi.os "darwin" }}
 Brewfile
 .config/ghostty
 Library
-run_once_install-packages-darwin.sh
+install-packages-darwin.sh
 {{- end }}
 {{- if ne .chezmoi.os "linux" }}
 .config/systemd
-run_once_install-packages-linux.sh
+install-packages-linux.sh
 {{- end }}
 {{- if ne .chezmoi.os "windows" }}
 Documents
-run_once_install-packages-windows.ps1
+AppData
+install-packages-windows.ps1
+install-update-task.ps1
+.local/bin/chezmoi-update-and-notify.ps1
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
 .zshrc
@@ -21,16 +26,36 @@ run_once_install-packages-windows.ps1
 .tmux.conf
 .config/ghostty
 .config/restic
+.config/zed
+{{/* zsh-only consumers */}}
+.config/direnv
+.config/dotfiles
+.config/pre-commit
+{{/* bash workers and bash-only run scripts (no sh on a stock Windows box) */}}
+.local/bin/chezmoi-update-and-notify
+.local/bin/dotfiles-brew-sync
+.local/bin/restic-backup
+build-allowed-signers.sh
+import-gpg-key.sh
+install-gh-extensions.sh
+update-tldr-cache.sh
+install-restic-units.sh
+install-update-timer.sh
+brew-bundle.sh
+install-brew-sync.sh
 {{- end }}
 {{- if default false .headless }}
 .config/ghostty
-.config/code
-Library/Application Support/Code
+.config/zed
 {{- end }}
 
 {{- if not .work }}
 .gitconfig-eit
 .git-hooks
+{{- end }}
+{{- if .work }}
+{{/* Never push personal GitHub keys as login keys onto an employer machine */}}
+.ssh/authorized_keys
 {{- end }}
 
 README.md

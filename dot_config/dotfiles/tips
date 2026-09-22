@@ -63,6 +63,11 @@ nvim: leader is Space. <leader>ff find files, <leader>fg live grep, <leader>fb b
 nvim: <leader>e toggles file tree. <leader>gg opens lazygit inside nvim.
 nvim: K shows LSP hover docs. gd jumps to definition. <leader>rn renames symbol.
 
+# ── zed ────────────────────────────────────────────────────────────
+zed . — open the current dir in Zed (reuses the existing window). Config lives in ~/.config/zed, managed by chezmoi.
+zed: cmd+shift+p opens the command palette; `zed: open default settings` shows every option with docs.
+zed: extensions in ~/.config/zed/settings.json → auto_install_extensions. Add a line, push, every box gets it.
+
 # ── ghostty ────────────────────────────────────────────────────────
 ghostty: cmd+enter toggles fullscreen. cmd+d / cmd+shift+d split. cmd+h/j/k/l nav.
 ghostty +list-keybinds — show every active binding (defaults + customs).

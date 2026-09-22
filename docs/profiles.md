@@ -18,23 +18,24 @@ Change any of them later with `chezmoi edit-config` then `chezmoi apply`.
 
 | | macOS desktop | macOS headless | Linux desktop | Linux server (`headless`) | Windows |
 |---|---|---|---|---|---|
-| **Packages** | Homebrew via `Brewfile`, all 81 entries incl. every cask | Same Brewfile, `--no-upgrade`. **Casks still install** | apt/dnf/pacman/apk base list + upstream install scripts | Same as Linux desktop (the headless branch is identical) | 19 winget packages + PSReadLine |
+| **Packages** | Homebrew: `common` + `gui` fragments (+ `personal` unless `work`) | `common` (+ `personal` unless `work`), `--no-upgrade`; no casks | distro base list + upstream scripts + GitHub release binaries + Zed + Nerd Font | Same minus Zed and the font | 20 winget packages + PSReadLine |
 | **Shell** | zsh + antidote + starship | same | same | same | PowerShell profile + starship |
-| **Neovim config** | ✓ | ✓ | ✓ (but apt Neovim is too old, see [G-02](gaps.md#g-02)) | ✓ (same caveat) | deployed to the wrong path, see [G-05](gaps.md#g-05) |
+| **Neovim config** | ✓ | ✓ | ✓ (Neovim ≥ 0.11 from upstream tarball) | ✓ | ✓ via `XDG_CONFIG_HOME=~/.config` |
 | **tmux config** | ✓ | ✓ | ✓ | ✓ | – |
 | **Ghostty config** | ✓ | – | – | – | – |
-| **VS Code settings + extensions** | ✓ | – | `extensions.txt` deployed, installer never runs | – | `extensions.txt` deployed, inert |
+| **Zed** (cask / install.sh / winget) + `settings.json` | ✓ | – | ✓ | – | ✓ (`AppData\Roaming\Zed`) |
 | **macOS defaults** | ✓ (42 keys) | – | – | – | – |
-| **Nightly `chezmoi update`** | launchd 03:17 | launchd 03:17 | systemd user timer 03:17 (+30 min jitter) | same, needs `loginctl enable-linger` | **none** |
-| **Nightly restic backup** | launchd 04:32 | **none** | systemd 04:32 (+jitter) | systemd 04:32 | **none** |
-| **Nightly brew-sync** | launchd 02:00 | – | – | – | – |
-| **Tailscale** | cask, on every Mac incl. work | cask | `install.sh` unless `work` | same | – |
-| **Bitwarden bootstrap** (`scripts/bootstrap.sh`) | ✓ | ✓ | ✓ | ✓ | **none** |
-| **git config** | ✓ SSH signing | ✓ | ✓ | ✓ | ✓ but signing key never provisioned |
-| **ssh config + authorized_keys** | ✓ | ✓ | ✓ | ✓ | ✓ (`ControlMaster` unsupported) |
-| **gpg public key import** | ✓ | ✓ | ✓ | ✓ | runs via `sh` if Git for Windows is present |
-| **`gh dash` extension** | ✓ once `gh` is authed | ✓ | ✓ | ✓ | same |
-| **tealdeer cache refresh** | ✓ | ✓ | ✓ | ✓ | same |
+| **Nightly `chezmoi update`** | launchd 03:17 | launchd 03:17 | systemd user timer 03:17 (+30 min jitter) | same, needs `loginctl enable-linger` | Scheduled Task 03:17 (when logged on) |
+| **Nightly restic backup** | launchd 04:32 | launchd 04:32 | systemd 04:32 (+jitter) | systemd 04:32 | – |
+| **Nightly brew-sync** | launchd 02:00 → `common` if work, else `personal` | – | – | – | – |
+| **Tailscale** | `tailscale-app` cask, personal only | same (personal) | `install.sh` unless `work` | same | – |
+| **Bitwarden bootstrap** | `bootstrap.sh` | `bootstrap.sh` | `bootstrap.sh` | `bootstrap.sh` | `bootstrap.ps1` (no restic) |
+| **git config** | ✓ SSH signing | ✓ | ✓ | ✓ | ✓ (key from `bootstrap.ps1`) |
+| **ssh config** | ✓ | ✓ | ✓ | ✓ | ✓ (no `ControlMaster` block) |
+| **authorized_keys from GitHub** | personal only | personal only | personal only | personal only | personal only |
+| **gpg public key import** | ✓ | ✓ | ✓ | ✓ | – (`bootstrap.ps1` imports the private key if `gpg` exists) |
+| **`gh dash` extension** | ✓ once `gh` is authed | ✓ | ✓ | ✓ | – |
+| **tealdeer cache refresh** | ✓ | ✓ | ✓ | ✓ | – |
 
 Legend: ✓ deployed and active · – not deployed by design · **bold** = a gap, see the register.
 
@@ -51,21 +52,24 @@ Applies on every OS unless stated.
 | SSH agent (Linux) | `~/.bitwarden-ssh-agent.sock` | `~/.1password/agent.sock` |
 | `Host github.com` | agent decides | pinned to `~/.ssh/id_ed25519_skenmy`, `IdentitiesOnly yes` |
 | `Host github-eit` | absent | pinned to `~/.ssh/id_ed25519_eit`; `eitclone org/repo` zsh helper clones into `~/code/eit/` |
-| `allowed_signers` | personal key only | personal key + EIT key (`pwilliams@eit.org`) |
+| `allowed_signers` | personal key only | personal key + EIT key (`workEmail`) |
+| `~/.ssh/authorized_keys` | managed from GitHub keys | **unmanaged** (left as the employer set it) |
+| Bootstrap SSH key filename | `~/.ssh/id_ed25519` | `~/.ssh/id_ed25519_skenmy` (+ manual `id_ed25519_eit`) |
 | Tailscale on Linux | installed by `install.sh` | skipped (employer-managed) |
-| Tailscale on macOS | cask | **cask still installs** ([G-03](gaps.md#g-03)) |
+| Tailscale on macOS | `tailscale-app` cask | not installed |
 | Starship prompt | identity pill shows `skenmy` or `EIT` based on the resolved commit email | same |
 
 ## What the `headless` flag changes
 
 | OS | Effect |
 |---|---|
-| macOS | Skips Ghostty config, VS Code settings + extensions, macOS defaults, brew-sync timer, **restic timer**; `brew bundle` runs with `--no-upgrade`. Casks are **not** skipped. |
-| Linux | Skips `~/.config/code/extensions.txt` only. The package list has a headless branch but both branches are identical, so packages are unaffected. |
-| Windows | Skips `~/.config/code/extensions.txt`. Nothing else. |
+| macOS | Skips Ghostty config, Zed config, macOS defaults, brew-sync timer, and the whole `gui.Brewfile` fragment (all casks and fonts); `brew bundle` runs with `--no-upgrade`. restic runs as on desktops. |
+| Linux | Skips the Zed install and `~/.config/zed`. Packages are otherwise identical. |
+| Windows | Nothing (Zed config lives under `AppData`, which is not headless-gated; a headless Windows box is not a supported profile). |
 
 ## Unconditional exclusions
 
-`README.md`, `CLAUDE.md`, `gpg-public-key.asc`, `scripts/`, `docs/`, `mkdocs.yml` are never deployed.
+`README.md`, `CLAUDE.md`, `gpg-public-key.asc`, `scripts/`, `docs/`, `mkdocs.yml`, `site/` are never deployed.
+Script entries in `.chezmoiignore` must use chezmoi's target name (prefixes stripped): see [G-21](gaps.md#g-21).
 `.github/` and `.gitignore` are skipped automatically because chezmoi ignores dot-prefixed entries in
 the source root. The GPG key is imported by a script instead of being copied as a file.

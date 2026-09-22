@@ -5,10 +5,10 @@ This is the **chezmoi source repo** for Paul's personal dotfiles. Files here ren
 ## What lives where
 
 - `dot_*` / `private_dot_*` — files that map to `~/.foo` etc. chezmoi strips the `dot_` prefix and decodes `private_` to mean 0600 perms (dirs 0700). `private_dot_ssh/` → `~/.ssh/`.
-- `dot_config/` — `~/.config/`. Per-tool folders inside: `starship.toml`, `ghostty/`, `nvim/`, `atuin/`, `mise/`, `pre-commit/`, `direnv/`, `restic/`, `dotfiles/` (tips file, brew-sync ignore list).
+- `dot_config/` — `~/.config/`. Per-tool folders inside: `starship.toml`, `ghostty/`, `nvim/`, `zed/` (renders `.chezmoitemplates/zed-settings.json`; Windows gets the same via `AppData/Roaming/Zed/`), `atuin/`, `mise/`, `pre-commit/`, `direnv/`, `restic/`, `dotfiles/` (tips file, brew-sync ignore list + target).
 - `Library/LaunchAgents/` (macOS only) — launchd plists. Currently the daily `chezmoi-update`, nightly `restic-backup`, 02:00 `dotfiles-brew-sync` jobs.
 - `dot_config/systemd/user/` (Linux only) — systemd user units for the same three jobs.
-- `Brewfile` — every brew/cask installed by `brew bundle`. Re-applied automatically when its hash changes (see `run_onchange_after_brew-bundle.sh.tmpl`).
+- `Brewfile.tmpl` + `.chezmoitemplates/brew/{common,gui,personal}.Brewfile` — `~/Brewfile` is rendered from the fragments by profile (`gui` needs `headless=false`, `personal` needs `work=false`). Edit the fragments. `brew bundle` re-runs when any of them changes (see `run_onchange_after_brew-bundle.sh.tmpl`). brew-sync appends to the fragment named in `~/.config/dotfiles/brew-sync-target`.
 - `scripts/` — `.chezmoiignore`'d. Shell-out scripts not deployed to `$HOME`: `bootstrap.sh` (curl-pipe-bash entry point), `seed-bitwarden.sh` (one-time secret push), `docsgen/` (Python, stdlib-only: generates the inventory pages for the audit site; tests in `docsgen/tests/`).
 - `docs/` + `mkdocs.yml` — `.chezmoiignore`'d. Hand-written audit pages (profiles, settings, gap register, how-to) for the GitHub Pages site at <https://skenmy.github.io/dotfiles/>. `docs/generated/` is gitignored and produced at build time. `.github/workflows/docs.yml` tests, generates, builds and deploys on every push to `main`. When you change a template, script or `.chezmoiignore`, update the matching hand-written page and its *Reviewed against* SHA in the same PR.
 - `dot_local/private_bin/executable_*` — scripts that end up at `~/.local/bin/` with 0700 perms. Workers for the timers.
@@ -37,7 +37,7 @@ chezmoi update      = git pull --rebase + chezmoi apply
    │
    ├── files refresh under ~ (dotfiles)
    ├── run_onchange scripts re-fire if their hash changed:
-   │     - brew bundle      (Brewfile changed?)
+   │     - brew bundle      (a Brewfile fragment changed?)
    │     - launchctl load   (a timer plist changed?)
    │     - gpg --import     (gpg-public-key.asc changed?)
    │     - tldr --update    (tips/tools changed?)
@@ -46,7 +46,7 @@ chezmoi update      = git pull --rebase + chezmoi apply
 
 02:00 daily — dotfiles-brew-sync
    ├── brew bundle dump → temp
-   ├── diff vs source Brewfile, append new lines, commit, push
+   ├── diff vs union of brew fragments, append to target fragment, signed commit, push
    └── other Macs pick it up via the 03:17 chezmoi-update
 
 04:32 daily — restic-backup
@@ -64,7 +64,7 @@ Stored at `~/.config/chezmoi/chezmoi.toml`; prompted on first run, edit later wi
 | `name` | `git user.name` |
 | `email` | `git user.email` |
 | `signingKey` | Signing **on/off flag** (empty disables signing). Signing is SSH-based; the real key is the on-disk SSH key (`id_ed25519_skenmy.pub` on work, `id_ed25519.pub` otherwise), not this value. |
-| `headless` | Skip GUI configs (Ghostty), skip macOS defaults, `brew bundle --no-upgrade` |
+| `headless` | Skip GUI configs (Ghostty), skip macOS defaults, skip the `gui.Brewfile` casks, `brew bundle --no-upgrade` |
 | `work` | Personal vs employer-issued. Gates Tailscale install on Linux, the `IdentityAgent` branching (1Password on work, Bitwarden on personal), and the **EIT EMU two-account setup**: `~/code/eit` identity (`.gitconfig-eit`), the `github-eit` ssh alias + on-disk GitHub key pinning, the `eitclone` helper, and the `~/.git-hooks` commit-identity guard. |
 
 ## Secrets
@@ -85,7 +85,7 @@ Push to BW once with `scripts/seed-bitwarden.sh`, pull on every new box automati
 You **can**:
 - Add or edit chezmoi-managed files. Standard flow: edit source → `chezmoi diff` → `chezmoi apply` (or open a PR and let the 03:17 timer apply it everywhere).
 - Add tips to `dot_config/dotfiles/tips` (one per line, propagates overnight).
-- Append `brew` / `cask` lines to `Brewfile` (or let `dotfiles-brew-sync` do it for you).
+- Append `brew` / `cask` lines to the right fragment under `.chezmoitemplates/brew/` (or let `dotfiles-brew-sync` do it for you, then move the line if it landed in the wrong fragment).
 - Add new `run_onchange_*` automation scripts. Re-run trigger: include `{{ include "<file>" | sha256sum }}` for any file that should re-fire the script.
 
 You **cannot** (without explicit human approval):
@@ -95,6 +95,12 @@ You **cannot** (without explicit human approval):
 
 ## Smoke test after any edit
 
+CI (`.github/workflows/ci.yml`) does all of this for every OS × profile on the PR; run it locally first:
+
+```sh
+uvx pre-commit run --all-files        # same hooks as CI (whitespace, yaml, gitleaks, codespell, shellcheck)
+```
+
 ```sh
 chezmoi diff                              # preview the rendered change
 chezmoi apply --dry-run                   # plus the script invocations
@@ -102,7 +108,7 @@ chezmoi apply                             # really do it on this box
 bash -n dot_local/private_bin/executable_*     # syntax-check any new scripts
 ```
 
-For Brewfile additions: `brew bundle check --file=Brewfile` lists missing entries.
+For Brewfile additions: `brew bundle check --file=~/Brewfile` (after `chezmoi apply`) lists missing entries.
 
 For tips file additions: `awk '/^[^#]/ && NF' dot_config/dotfiles/tips | wc -l` — should match expectations; nothing should contain unbalanced backticks (1-in-N hang risk).
 

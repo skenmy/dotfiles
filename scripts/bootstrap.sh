@@ -9,9 +9,10 @@
 #   1. Installs chezmoi if missing.
 #   2. Installs Bitwarden CLI (bw) if missing.
 #   3. Unlocks the Bitwarden vault (Touch ID on macOS if seeded, else master pw prompt).
-#   4. Pulls GPG private key, SSH private key, and atuin creds from Bitwarden.
-#   5. Imports GPG key, writes SSH key with 0600.
-#   6. Runs `chezmoi init --apply skenmy` (installs brews/configs/etc.).
+#   4. Pulls GPG private key, restic env and atuin creds from Bitwarden; imports GPG.
+#   5. Runs `chezmoi init --apply skenmy` (prompts for name/email/headless/work; installs everything).
+#   6. Writes the SSH private key with 0600 — as ~/.ssh/id_ed25519 on personal boxes,
+#      ~/.ssh/id_ed25519_skenmy on work boxes (what ~/.gitconfig and ~/.ssh/config expect there).
 #   7. Patches atuin sync_address if needed, then `atuin login` + `atuin sync`.
 #
 # Idempotent: every step checks before doing.
@@ -33,7 +34,7 @@ KEYCHAIN_ENTRY="${KEYCHAIN_ENTRY:-bw-master}"
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
-c_blue=$'\033[1;34m' c_green=$'\033[1;32m' c_red=$'\033[1;31m' c_dim=$'\033[2m' c_reset=$'\033[0m'
+c_blue=$'\033[1;34m' c_green=$'\033[1;32m' c_red=$'\033[1;31m' c_reset=$'\033[0m'
 log()  { printf "%s==>%s %s\n" "$c_blue"  "$c_reset" "$*"; }
 ok()   { printf "%s ✓%s  %s\n" "$c_green" "$c_reset" "$*"; }
 warn() { printf "%s !!%s %s\n" "$c_red"   "$c_reset" "$*" >&2; }
@@ -54,7 +55,7 @@ tty_in() {
 case "$(uname -s)" in
     Darwin) OS=darwin ;;
     Linux)  OS=linux  ;;
-    *)      die "Unsupported OS: $(uname -s). Use scripts/bootstrap.ps1 on Windows." ;;
+    *)      die "Unsupported OS: $(uname -s). On Windows run scripts/bootstrap.ps1 (see README)." ;;
 esac
 
 # ---------------------------------------------------------------------------
@@ -84,7 +85,6 @@ ensure_bw() {
         elif has npm; then
             sudo npm install -g @bitwarden/cli
         else
-            local arch=x64; [ "$(uname -m)" = "aarch64" ] && arch=arm64
             local tmp; tmp="$(mktemp -d)"
             curl -fsSL "https://vault.bitwarden.com/download/?app=cli&platform=linux" -o "$tmp/bw.zip"
             unzip -q "$tmp/bw.zip" -d "$HOME/.local/bin"
@@ -145,10 +145,17 @@ import_gpg() {
     ok "GPG imported"
 }
 
+chezmoi_is_work() {
+    chezmoi data --format json 2>/dev/null | grep -Eq '"work":[[:space:]]*true'
+}
+
 install_ssh() {
     log "Installing SSH private key from ${SSH_ITEM}…"
     local name key pub
     name="${SSH_ITEM##*/}"
+    # Work profile pins the personal GitHub key under a distinct name so the
+    # employer's 1Password agent key never collides with it.
+    if chezmoi_is_work; then name="${name}_skenmy"; fi
     key="$(bw_notes "$SSH_ITEM")" || { warn "SSH item missing; skipping"; return; }
     pub="$(bw_field  "$SSH_ITEM" public || true)"
     mkdir -p "$HOME/.ssh"; chmod 700 "$HOME/.ssh"
@@ -156,6 +163,9 @@ install_ssh() {
     chmod 600 "$HOME/.ssh/$name"
     [ -n "$pub" ] && { printf '%s\n' "$pub" > "$HOME/.ssh/$name.pub"; chmod 644 "$HOME/.ssh/$name.pub"; }
     ok "SSH key written to ~/.ssh/$name"
+    if chezmoi_is_work; then
+        warn "work box: also place the EIT key at ~/.ssh/id_ed25519_eit(.pub) from 1Password, then run 'chezmoi apply' to rebuild allowed_signers"
+    fi
 }
 
 stage_atuin_secret() {
@@ -237,10 +247,11 @@ main() {
     has gpg   || { has brew && brew install gnupg || { has apt-get && sudo apt-get install -y gnupg; }; }
 
     import_gpg
-    install_ssh
     stage_atuin_secret
     install_restic_env
     run_chezmoi
+    install_ssh          # after init so the work flag is known
+    chezmoi apply        # re-fires build-allowed-signers now the key file exists
     finish_atuin
 
     printf "\n%s🎉 done.%s Open a fresh shell.\n" "$c_green" "$c_reset"

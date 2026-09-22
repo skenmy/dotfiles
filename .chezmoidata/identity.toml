@@ -1,0 +1,4 @@
+# Versioned template data (merged into every template by chezmoi, no re-init
+# needed). Identity strings that used to be hard-coded in four places.
+githubUser = "skenmy"
+workEmail = "pwilliams@eit.org"

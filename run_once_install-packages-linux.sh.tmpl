@@ -1,135 +1,197 @@
 {{- if eq .chezmoi.os "linux" -}}
 #!/usr/bin/env bash
-set -euo pipefail
+# Linux first-run package install. Re-runs only when this file's content
+# changes. Keeps going past individual failures (each is logged with "!!")
+# so one flaky download never blocks the rest of the apply.
+set -uo pipefail
 
 echo "==> Linux package install"
 
 SUDO=""
 [ "$(id -u)" -ne 0 ] && SUDO="sudo"
+FAILED=()
+fail() { echo "!! $*" >&2; FAILED+=("$1"); }
 
-# ---- Common CLI packages (cross-distro names where possible) ----
-COMMON_PKGS=(git curl wget unzip ca-certificates gnupg zsh tmux jq tree)
-{{- if not .headless }}
-COMMON_PKGS+=(neovim ripgrep fd-find bat)
-{{- else }}
-COMMON_PKGS+=(neovim ripgrep fd-find bat)
-{{- end }}
+mkdir -p "$HOME/.local/bin"
+export PATH="$HOME/.local/bin:$PATH"
 
-# Power tools that may need backports/cargo/manual install
-EXTRAS_VIA_BIN=(starship mise atuin zoxide eza lazygit delta gh)
+# ---- Architecture → regex that matches every naming convention seen on GitHub ----
+case "$(uname -m)" in
+    x86_64|amd64)  ARCH_RE='(x86_64|amd64)' ;;
+    aarch64|arm64) ARCH_RE='(aarch64|arm64)' ;;
+    *)             ARCH_RE="$(uname -m)" ;;
+esac
+
+# ---- Distro packages ----
+# Cross-distro names first; per-manager spellings (fd, xz, build tools) below.
+COMMON_PKGS=(git curl wget unzip ca-certificates gnupg zsh tmux jq tree ripgrep bat btop)
 
 install_apt() {
     export DEBIAN_FRONTEND=noninteractive
     $SUDO apt-get update -y
-    $SUDO apt-get install -y "${COMMON_PKGS[@]}" build-essential
-    # bat is `batcat` on Debian/Ubuntu; symlink for convenience
+    $SUDO apt-get install -y "${COMMON_PKGS[@]}" fd-find xz-utils build-essential || fail "apt packages"
+    # Debian/Ubuntu rename these binaries; expose the upstream names.
     command -v batcat >/dev/null && ! command -v bat >/dev/null && \
         $SUDO ln -sf "$(command -v batcat)" /usr/local/bin/bat
     command -v fdfind >/dev/null && ! command -v fd >/dev/null && \
         $SUDO ln -sf "$(command -v fdfind)" /usr/local/bin/fd
 }
-
-install_dnf() {
-    $SUDO dnf install -y "${COMMON_PKGS[@]}" @development-tools || true
-}
-
-install_pacman() {
-    $SUDO pacman -Sy --noconfirm "${COMMON_PKGS[@]}" base-devel || true
-}
-
-install_apk() {
-    $SUDO apk add --no-cache "${COMMON_PKGS[@]}" build-base
-}
+install_dnf()    { $SUDO dnf install -y "${COMMON_PKGS[@]}" fd-find xz @development-tools || fail "dnf packages"; }
+install_pacman() { $SUDO pacman -Sy --noconfirm --needed "${COMMON_PKGS[@]}" fd xz base-devel || fail "pacman packages"; }
+install_apk()    { $SUDO apk add --no-cache "${COMMON_PKGS[@]}" fd xz build-base || fail "apk packages"; }
 
 if   command -v apt-get >/dev/null; then install_apt
 elif command -v dnf     >/dev/null; then install_dnf
 elif command -v pacman  >/dev/null; then install_pacman
 elif command -v apk     >/dev/null; then install_apk
-else
-    echo "!! Unknown package manager; install ${COMMON_PKGS[*]} manually" >&2
+else fail "unknown package manager — install ${COMMON_PKGS[*]} by hand"
 fi
 
-# ---- Install via official scripts (works on every distro) ----
-mkdir -p "$HOME/.local/bin"
-export PATH="$HOME/.local/bin:$PATH"
+# ---- GitHub release helpers ----
+# gh_release_url <owner/repo> <asset regex> [arch regex]  → download URL of the first match
+gh_release_url() {
+    local repo="$1" pattern="$2" arch="${3:-$ARCH_RE}"
+    local auth=()
+    [ -n "${GITHUB_TOKEN:-}" ] && auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
+    curl -fsSL "${auth[@]}" "https://api.github.com/repos/$repo/releases/latest" \
+        | grep '"browser_download_url"' | cut -d'"' -f4 \
+        | grep -E "$pattern" | grep -E "$arch" | head -1
+}
 
+# Remove a scratch directory created with mktemp -d.
+cleanup_tmp() { [ -n "${1:-}" ] && [ -d "$1" ] && rm -r -f -- "$1"; }
+
+# install_release_bin <owner/repo> <binary name> <asset regex>
+# Handles .tar.gz/.tgz/.tar.xz/.zip archives and raw single-file binaries.
+install_release_bin() {
+    local repo="$1" name="$2" pattern="$3" url tmp
+    url="$(gh_release_url "$repo" "$pattern")"
+    [ -z "$url" ] && { fail "$name: no release asset matched $pattern for $ARCH_RE"; return; }
+    tmp="$(mktemp -d)"
+    if ! curl -fsSL "$url" -o "$tmp/asset"; then fail "$name: download failed"; cleanup_tmp "$tmp"; return; fi
+    case "$url" in
+        *.tar.gz|*.tgz) tar -xzf "$tmp/asset" -C "$tmp" ;;
+        *.tar.xz)       tar -xJf "$tmp/asset" -C "$tmp" ;;
+        *.zip)          unzip -q "$tmp/asset" -d "$tmp" ;;
+        *)              mv "$tmp/asset" "$tmp/$name" && chmod +x "$tmp/$name" ;;
+    esac
+    local found
+    found="$(find "$tmp" -type f -name "$name" | head -1)"
+    if [ -n "$found" ]; then install -m 0755 "$found" "$HOME/.local/bin/$name" && echo "  - $name: installed from $repo"
+    else fail "$name: binary not found inside asset"
+    fi
+    cleanup_tmp "$tmp"
+}
+
+# install_release_tree <owner/repo> <name> <asset regex> <bin path inside tree>
+# For tools that need their whole tree (runtime files), extracted to ~/.local/<name>.
+install_release_tree() {
+    local repo="$1" name="$2" pattern="$3" bin_rel="$4" url tmp prefix="$HOME/.local/$2"
+    url="$(gh_release_url "$repo" "$pattern")"
+    [ -z "$url" ] && { fail "$name: no release asset matched $pattern"; return; }
+    tmp="$(mktemp -d)"
+    if ! curl -fsSL "$url" -o "$tmp/asset"; then fail "$name: download failed"; cleanup_tmp "$tmp"; return; fi
+    cleanup_tmp "$prefix"; mkdir -p "$prefix"
+    tar -xzf "$tmp/asset" -C "$prefix" --strip-components=1 || { fail "$name: extract failed"; cleanup_tmp "$tmp"; return; }
+    ln -sf "$prefix/$bin_rel" "$HOME/.local/bin/$name" && echo "  - $name: installed to $prefix"
+    cleanup_tmp "$tmp"
+}
+
+# ---- Tools installed via official scripts ----
 if ! command -v starship >/dev/null; then
-    curl -sS https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin"
+    curl -sS https://starship.rs/install.sh | sh -s -- -y -b "$HOME/.local/bin" || fail starship
 fi
-
 if ! command -v mise >/dev/null; then
-    curl -fsSL https://mise.run | sh
+    curl -fsSL https://mise.run | sh || fail mise
 fi
-
 if ! command -v atuin >/dev/null; then
-    curl -fsSL https://github.com/atuinsh/atuin/releases/latest/download/atuin-installer.sh | sh -s -- --no-modify-path
+    curl -fsSL https://github.com/atuinsh/atuin/releases/latest/download/atuin-installer.sh | sh -s -- --no-modify-path || fail atuin
 fi
-
 if ! command -v zoxide >/dev/null; then
-    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+    curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh || fail zoxide
+fi
+if ! command -v fzf >/dev/null && [ ! -d "$HOME/.fzf" ]; then
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf" && \
+        "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish || fail fzf
 fi
 
-if ! command -v fzf >/dev/null && [ ! -d "$HOME/.fzf" ]; then
-    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
-    "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish
+# ---- Tools installed from GitHub releases into ~/.local/bin ----
+# These are what ~/.gitconfig (delta), ~/.zshrc (eza, direnv, gh) and the
+# aliases (lazygit, yq) assume exist. Distro packages are too old or absent.
+command -v delta   >/dev/null || install_release_bin "dandavison/delta"     "delta"   "unknown-linux-gnu.tar.gz$"
+command -v eza     >/dev/null || install_release_bin "eza-community/eza"    "eza"     "unknown-linux-gnu.tar.gz$"
+command -v lazygit >/dev/null || install_release_bin "jesseduffield/lazygit" "lazygit" "linux_.*tar.gz$"
+command -v gh      >/dev/null || install_release_bin "cli/cli"              "gh"      "linux_.*tar.gz$"
+command -v direnv  >/dev/null || install_release_bin "direnv/direnv"        "direnv"  "direnv.linux-"
+command -v yq      >/dev/null || install_release_bin "mikefarah/yq"         "yq"      "yq_linux_(amd64|arm64)$"
+command -v tldr    >/dev/null || install_release_bin "dbrgn/tealdeer"       "tldr"    "tealdeer-linux-.*-musl$"   # raw binary, renamed
+command -v xh      >/dev/null || install_release_bin "ducaale/xh"           "xh"      "unknown-linux-musl.tar.gz"
+
+# ---- Neovim ≥ 0.11 (the nvim config uses vim.lsp.config + treesitter main) ----
+# Distro packages lag (Debian 12: 0.7, Ubuntu 24.04: 0.9), so take the
+# upstream tarball. ~/.local/bin is first on PATH, so it shadows any distro nvim.
+nvim_too_old() {
+    command -v nvim >/dev/null || return 0
+    local major minor
+    read -r major minor < <(nvim --version | sed -nE '1s/^NVIM v([0-9]+)\.([0-9]+).*/\1 \2/p')
+    [ "${major:-0}" -eq 0 ] && [ "${minor:-0}" -lt 11 ]
+}
+if nvim_too_old; then
+    install_release_tree "neovim/neovim" "nvim" "nvim-linux-.*tar.gz$" "bin/nvim"
 fi
 
 # ---- restic ----
-# Most distros have a recent-enough restic; fall back to the official install.sh.
 if ! command -v restic >/dev/null; then
     if command -v apt-get >/dev/null; then $SUDO apt-get install -y restic
     elif command -v dnf  >/dev/null; then $SUDO dnf install -y restic
-    elif command -v pacman >/dev/null; then $SUDO pacman -S --noconfirm restic
+    elif command -v pacman >/dev/null; then $SUDO pacman -S --noconfirm --needed restic
     elif command -v apk  >/dev/null; then $SUDO apk add --no-cache restic
-    fi
+    fi || fail restic
 fi
 
 # ---- Tailscale (personal devices only — work boxes use the employer install) ----
 {{- if not .work }}
 if ! command -v tailscale >/dev/null; then
-    curl -fsSL https://tailscale.com/install.sh | sh
+    curl -fsSL https://tailscale.com/install.sh | sh || fail tailscale
 fi
 {{- end }}
 
-# ---- Terminal quick-wins ----
-# tealdeer (fast tldr-pages client) and xh (friendlier curl) via cargo if available,
-# else download release binary into ~/.local/bin.
-install_release_bin() {
-    local repo="$1" name="$2" pattern="$3"
-    local arch; arch="$(uname -m)"
-    case "$arch" in x86_64) arch=x86_64 ;; aarch64|arm64) arch=aarch64 ;; esac
-    local url
-    url="$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" \
-        | grep '"browser_download_url"' \
-        | grep -E "$pattern" \
-        | grep -E "$arch" \
-        | head -1 \
-        | cut -d'"' -f4)"
-    [ -z "$url" ] && { echo "  - $name: no asset matched $pattern / $arch"; return; }
-    local tmp; tmp="$(mktemp -d)"
-    curl -fsSL "$url" -o "$tmp/asset" && (
-        cd "$tmp"
-        case "$url" in
-            *.tar.gz|*.tgz) tar xzf asset ;;
-            *.zip) unzip -q asset ;;
-        esac
-        find . -type f -name "$name" -executable -exec install -m 0755 {} "$HOME/.local/bin/$name" \;
-    )
-    rm -rf "$tmp"
-}
+{{- if not .headless }}
 
-command -v tldr >/dev/null || install_release_bin "dbrgn/tealdeer" "tldr" "linux-musl.tar.gz|linux-gnu.tar.gz"
-command -v xh   >/dev/null || install_release_bin "ducaale/xh"     "xh"   "unknown-linux-musl.tar.gz"
+# ---- Desktop only: Zed (needs a GPU/Vulkan) and the Nerd Font starship/eza expect ----
+if ! command -v zed >/dev/null; then
+    curl -f https://zed.dev/install.sh | sh || fail zed
+fi
+FONT_DIR="$HOME/.local/share/fonts/JetBrainsMonoNerdFont"
+if [ ! -d "$FONT_DIR" ]; then
+    url="$(gh_release_url "ryanoasis/nerd-fonts" "JetBrainsMono.tar.xz$" ".")"
+    if [ -n "$url" ] && mkdir -p "$FONT_DIR" && curl -fsSL "$url" | tar -xJf - -C "$FONT_DIR"; then
+        command -v fc-cache >/dev/null && fc-cache -f "$FONT_DIR" >/dev/null
+        echo "  - JetBrainsMono Nerd Font: installed to $FONT_DIR"
+    else
+        fail "nerd-font"
+    fi
+fi
+{{- end }}
 
 # ---- Antidote (zsh plugin manager) ----
 if [ ! -d "$HOME/.antidote" ]; then
-    git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
+    git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote" || fail antidote
 fi
 
 # ---- TPM ----
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
-    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" || fail tpm
 fi
 
-echo "==> Done. chsh -s $(command -v zsh) if zsh isn't your default shell."
+# ---- Default shell → zsh (interactive runs only; chsh prompts for a password) ----
+if [ -t 0 ] && command -v zsh >/dev/null && [ "$(basename "${SHELL:-}")" != "zsh" ]; then
+    chsh -s "$(command -v zsh)" && echo "  - default shell set to zsh (takes effect at next login)" || fail chsh
+fi
+
+if [ "${#FAILED[@]}" -gt 0 ]; then
+    echo "==> Done with failures: ${FAILED[*]}. Fix and re-run: chezmoi state delete-bucket --bucket=scriptState && chezmoi apply"
+else
+    echo "==> Done."
+fi
 {{ end -}}

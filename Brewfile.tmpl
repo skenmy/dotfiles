@@ -1,0 +1,15 @@
+# ~/Brewfile — rendered by chezmoi. DO NOT EDIT: change the fragments under
+# .chezmoitemplates/brew/ in the dotfiles source instead.
+#
+#   common.Brewfile   → every Mac
+#   gui.Brewfile      → headless = false
+#   personal.Brewfile → work = false
+{{ template "brew/common.Brewfile" . }}
+{{- if not .headless }}
+
+{{ template "brew/gui.Brewfile" . }}
+{{- end }}
+{{- if not .work }}
+
+{{ template "brew/personal.Brewfile" . }}
+{{- end }}

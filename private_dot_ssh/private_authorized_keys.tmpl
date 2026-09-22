@@ -1,9 +1,10 @@
 {{- /*
-  Auto-populated from GitHub @skenmy at chezmoi apply time.
+  Auto-populated from GitHub @{{ .githubUser }} at chezmoi apply time.
+  Personal machines only — unmanaged on work boxes via .chezmoiignore.
   To add a per-host extra key, append to ~/.ssh/authorized_keys.local.
 */ -}}
-# Public keys for @skenmy (synced from github.com/skenmy.keys)
-{{ range gitHubKeys "skenmy" -}}
+# Public keys for @{{ .githubUser }} (synced from github.com/{{ .githubUser }}.keys)
+{{ range gitHubKeys .githubUser -}}
 {{ .Key }}
 {{ end -}}
 

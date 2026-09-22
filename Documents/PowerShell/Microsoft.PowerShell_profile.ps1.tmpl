@@ -1,6 +1,9 @@
 {{- if eq .chezmoi.os "windows" -}}
 # ---- PowerShell profile (Windows) ----
 
+# Same config root as macOS/Linux (also set user-wide by the update-task script)
+if (-not $env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME = Join-Path $HOME '.config' }
+
 # UTF-8 everywhere
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

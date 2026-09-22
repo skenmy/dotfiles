@@ -1,0 +1,44 @@
+# The repo's own hooks — the same language-agnostic safety net the dotfiles
+# ship to every project (dot_config/pre-commit/skenmy-defaults.yaml), plus
+# shellcheck. Run locally: `pre-commit install` once, or `pre-commit run -a`.
+# CI runs `pre-commit run --all-files` on every push and PR.
+# Dot-prefixed, so chezmoi never deploys this file.
+exclude: ^(gpg-public-key\.asc|private_dot_ssh/id_rsa\.pub|docs/generated/)
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.tmpl$   # templates may need trailing spaces for {{- }} trimming
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-yaml
+      - id: check-json
+        exclude: ^\.chezmoitemplates/zed-settings\.json$   # JSONC (comments)
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-case-conflict
+      - id: check-symlinks
+      - id: detect-private-key
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.3
+    hooks:
+      - id: codespell
+        args: ["--ignore-words-list=crate,hist,iterm,ans,nd,wil,fpr"]   # quoted: YAML would split on the commas
+        exclude: ^(dot_config/starship\.toml\.tmpl|dot_config/dotfiles/tips)$
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        args: [-S, warning, -s, bash]
+        files: ^(scripts/.*\.sh|dot_local/private_bin/executable_[^.]+)$
