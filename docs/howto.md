@@ -160,6 +160,6 @@ python3 -m unittest discover -s scripts -p 'test_*.py'   # parser tests
 - **Add a generated inventory:** write a parser in `scripts/docsgen/parsers.py` with a test in
   `scripts/docsgen/tests/`, a renderer in `render.py`, wire it in `__main__.py`, add the page to `nav`
   in `mkdocs.yml`. `mkdocs build --strict` fails the build if a nav entry is missing.
-- **Publishing:** GitHub Pages must be set to *Source: GitHub Actions* once (Settings → Pages). The
-  workflow's `configure-pages` step also attempts to enable it. The site lives at
-  <https://skenmy.github.io/dotfiles/>.
+- **Publishing:** GitHub Pages is set to *Source: GitHub Actions* (done 2026-09-22). The default
+  workflow token cannot create the Pages site, so if it is ever disabled, re-enable it by hand in
+  Settings → Pages. The site lives at <https://skenmy.github.io/dotfiles/>.

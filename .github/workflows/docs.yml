@@ -24,8 +24,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Unit-test the inventory parsers
@@ -36,7 +36,7 @@ jobs:
         run: |
           pip install --quiet "mkdocs-material<10"
           mkdocs build --strict
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
@@ -48,10 +48,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # enablement=true asks GitHub to switch Pages on (source = Actions) if
-      # it isn't already. Fallback: Settings → Pages → Source: GitHub Actions.
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
+      # Pages must already be enabled with Source = GitHub Actions
+      # (Settings → Pages); the default token cannot create the site itself.
+      - uses: actions/configure-pages@v6
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
