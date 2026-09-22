@@ -18,7 +18,7 @@ Change any of them later with `chezmoi edit-config` then `chezmoi apply`.
 
 | | macOS desktop | macOS headless | Linux desktop | Linux server (`headless`) | Windows |
 |---|---|---|---|---|---|
-| **Packages** | Homebrew: `common` + `gui` fragments (+ `personal` unless `work`) | `common` (+ `personal` unless `work`), `--no-upgrade`; no casks | distro base list + upstream scripts + GitHub release binaries + Zed + Nerd Font | Same minus Zed and the font | 20 winget packages + PSReadLine |
+| **Packages** | Homebrew: `common` + `gui` + (`personal` or `work`) fragments | `common` + (`personal` or `work`), `--no-upgrade`; no casks | distro base list + upstream scripts + GitHub release binaries + Zed + Nerd Font | Same minus Zed and the font | 20 winget packages + PSReadLine |
 | **Shell** | zsh + antidote + starship | same | same | same | PowerShell profile + starship |
 | **Neovim config** | ✓ | ✓ | ✓ (Neovim ≥ 0.11 from upstream tarball) | ✓ | ✓ via `XDG_CONFIG_HOME=~/.config` |
 | **tmux config** | ✓ | ✓ | ✓ | ✓ | – |
@@ -27,7 +27,7 @@ Change any of them later with `chezmoi edit-config` then `chezmoi apply`.
 | **macOS defaults** | ✓ (42 keys) | – | – | – | – |
 | **Nightly `chezmoi update`** | launchd 03:17 | launchd 03:17 | systemd user timer 03:17 (+30 min jitter) | same, needs `loginctl enable-linger` | Scheduled Task 03:17 (when logged on) |
 | **Nightly restic backup** | launchd 04:32 | launchd 04:32 | systemd 04:32 (+jitter) | systemd 04:32 | – |
-| **Nightly brew-sync** | launchd 02:00 → `common` if work, else `personal` | – | – | – | – |
+| **Nightly brew-sync** | launchd 02:00 → `work` if work, else `personal` | – | – | – | – |
 | **Tailscale** | `tailscale-app` cask, personal only | same (personal) | `install.sh` unless `work` | same | – |
 | **Bitwarden bootstrap** | `bootstrap.sh` | `bootstrap.sh` | `bootstrap.sh` | `bootstrap.sh` | `bootstrap.ps1` (no restic) |
 | **git config** | ✓ SSH signing | ✓ | ✓ | ✓ | ✓ (key from `bootstrap.ps1`) |
@@ -57,6 +57,7 @@ Applies on every OS unless stated.
 | Bootstrap SSH key filename | `~/.ssh/id_ed25519` | `~/.ssh/id_ed25519_skenmy` (+ manual `id_ed25519_eit`) |
 | Tailscale on Linux | installed by `install.sh` | skipped (employer-managed) |
 | Tailscale on macOS | `tailscale-app` cask | not installed |
+| Homebrew fragment | `personal.Brewfile` + brew-sync target `personal` | `work.Brewfile` + brew-sync target `work` |
 | Starship prompt | identity pill shows `skenmy` or `EIT` based on the resolved commit email | same |
 
 ## What the `headless` flag changes

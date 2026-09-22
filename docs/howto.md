@@ -25,8 +25,8 @@ disable or revert SSH commit signing.
 
 Append `brew "name"` to `.chezmoitemplates/brew/common.Brewfile` (or `cask "name"` to `gui.Brewfile`, since
 casks need a display). Or just `brew install name` on any Mac and let the 02:00 brew-sync commit it to
-that machine's target fragment (`common` on work Macs, `personal` elsewhere); move the line afterwards
-if it belongs in a different fragment. Either way `brew bundle` re-runs on every affected Mac at the next apply.
+that machine's target fragment (`work` on work Macs, `personal` elsewhere); move the line to `common`
+or `gui` afterwards if every Mac should have it. Either way `brew bundle` re-runs on every affected Mac at the next apply.
 
 ### Remove a package everywhere (macOS)
 
@@ -44,6 +44,7 @@ Move the line between fragments in `.chezmoitemplates/brew/`:
 | `common.Brewfile` | every Mac |
 | `gui.Brewfile` | Macs with `headless = false` |
 | `personal.Brewfile` | Macs with `work = false` (regardless of headless) |
+| `work.Brewfile` | Macs with `work = true` |
 
 Nothing is uninstalled on machines that already have it: run `brew uninstall name` there. brew-sync
 diffs against the union of all fragments, so a package gated to another profile is never re-added.

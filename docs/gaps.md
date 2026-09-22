@@ -33,6 +33,7 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-22](#g-22) | Low | Linux | `import-gpg-key` shebang mangled by a `{{-` trim | **fixed** |
 | [G-23](#g-23) | High | macOS, Linux | A brew-sync merge conflict leaves the source clone mid-rebase; every nightly update then fails silently | **fixed** — workers detect and reset the clone |
 | [G-24](#g-24) | Low | all | codespell `--ignore-words-list` split by YAML; only the first word was ignored | **fixed** — quoted |
+| [G-25](#g-25) | High | macOS work | brew-sync on a work Mac targeted `common`, so employer tooling would reach every Mac | **fixed** — `work.Brewfile` fragment |
 
 ---
 
@@ -220,7 +221,18 @@ chezmoi target names (see G-21), so Windows never attempts them. Consequence: no
 
 **Fixed.** The installer runs `chsh -s $(command -v zsh)` when stdin is a terminal and `$SHELL` is not zsh; non-interactive applies skip it and print nothing.
 
-## G-22 — `import-gpg-key` shebang mangled {#g-22}
+## G-25 — work-Mac brew-sync would publish employer tooling to every Mac {#g-25}
+
+**Evidence.** After G-03 the sync target on `work = true` machines was `common`. The work MacBook's stuck
+clone held three never-pushed brew-sync commits with 91 employer packages (ansible, argocd, oci-cli,
+Vault, Stream Deck, …); had they synced into `common.Brewfile`, every personal Mac would have installed
+them at the next apply.
+
+**Fixed.** A fourth fragment, `work.Brewfile`, rendered only when `work = true`; `brew-sync-target`
+renders `work` on work Macs and `personal` elsewhere. `common.Brewfile` is now hand-edited only.
+Work Macs' local installs therefore reach other work Macs and nothing else. Expect the first nightly
+sync from the work MacBook to append its current package set to `work.Brewfile`; prune lines that
+should not propagate (ones needing admin rights, or duplicates such as `tfenv` alongside `terraform`).
 
 **Evidence.** The template began `#!/usr/bin/env bash` followed by a `{{- /* … */ -}}` comment; the leading
 `-` trimmed the newline after the shebang, so the rendered first line was

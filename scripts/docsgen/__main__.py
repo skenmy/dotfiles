@@ -14,7 +14,7 @@ from pathlib import Path
 from . import parsers as p
 from . import render as r
 
-BREW_FRAGMENTS = ("common", "gui", "personal")
+BREW_FRAGMENTS = ("common", "gui", "personal", "work")
 
 LINUX_DISTRO_EXTRAS = {
     "apt": "fd-find, xz-utils, build-essential (+ symlinks batcat→bat, fdfind→fd)",

@@ -59,6 +59,7 @@ FRAGMENT_GATES = {
     "common": "every macOS box",
     "gui": "`headless = false` only",
     "personal": "`work = false` only",
+    "work": "`work = true` only",
 }
 
 
