@@ -24,10 +24,35 @@ command -v chezmoi >/dev/null || { say "chezmoi not on PATH; aborting"; exit 0; 
 say "starting chezmoi update on $HOST"
 
 SOURCE_DIR="$(chezmoi source-path 2>/dev/null || echo "$HOME/.local/share/chezmoi")"
+
+# The source clone is disposable: origin/main is the truth. If a previous
+# pull/rebase (usually two Macs' brew-sync runs colliding on one fragment)
+# left it mid-rebase or with unmerged files, every later `chezmoi update`
+# fails until someone notices. Detect that and put the clone back on main.
+source_is_stuck() {
+    [ -d "$SOURCE_DIR/.git/rebase-merge" ] || [ -d "$SOURCE_DIR/.git/rebase-apply" ] || \
+        git -C "$SOURCE_DIR" status --porcelain 2>/dev/null | grep -qE '^(UU|AA|DD|AU|UA|DU|UD)'
+}
+recover_source() {
+    say "source clone is stuck (rebase in progress or unmerged files) — resetting to origin/main"
+    git -C "$SOURCE_DIR" rebase --abort >/dev/null 2>&1 || true
+    git -C "$SOURCE_DIR" merge --abort  >/dev/null 2>&1 || true
+    git -C "$SOURCE_DIR" checkout -q -f main 2>/dev/null || git -C "$SOURCE_DIR" checkout -q -B main
+    git -C "$SOURCE_DIR" fetch -q origin && git -C "$SOURCE_DIR" reset -q --hard origin/main
+    while git -C "$SOURCE_DIR" stash list | grep -q .; do git -C "$SOURCE_DIR" stash drop -q; done
+}
+
+source_is_stuck && recover_source
 BEFORE_SHA="$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
 
 chezmoi update --force >>"$LOG" 2>&1
 rc=$?
+if [ "$rc" -ne 0 ] && source_is_stuck; then
+    recover_source
+    say "retrying chezmoi update after recovery"
+    chezmoi update --force >>"$LOG" 2>&1
+    rc=$?
+fi
 
 AFTER_SHA="$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
 

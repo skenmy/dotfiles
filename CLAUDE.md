@@ -95,6 +95,12 @@ You **cannot** (without explicit human approval):
 
 ## Smoke test after any edit
 
+CI (`.github/workflows/ci.yml`) does all of this for every OS × profile on the PR; run it locally first:
+
+```sh
+uvx pre-commit run --all-files        # same hooks as CI (whitespace, yaml, gitleaks, codespell, shellcheck)
+```
+
 ```sh
 chezmoi diff                              # preview the rendered change
 chezmoi apply --dry-run                   # plus the script invocations

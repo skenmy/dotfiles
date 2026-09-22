@@ -20,7 +20,7 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-09](#g-09) | Medium | macOS headless | No restic backup on headless Macs — intentional? | **fixed** — decided: headless Macs are backed up |
 | [G-10](#g-10) | Medium | docs | README drift (GPG vs SSH signing, themes, age, agents) | **fixed** |
 | [G-11](#g-11) | Medium | macOS desktop | VS Code settings hard-code `/Users/paul` | **fixed** — VS Code management removed; Zed replaces it |
-| [G-12](#g-12) | Medium | repo | No CI or pre-commit on the repo itself | partly fixed by the docs workflow |
+| [G-12](#g-12) | Medium | repo | No CI or pre-commit on the repo itself | **fixed** — `ci.yml`: pre-commit, per-OS/profile render, shellcheck, assertions |
 | [G-13](#g-13) | Low | all | Neovim `<C-j>`/`<C-k>` mapped twice | **fixed** — quickfix on `]q`/`[q` |
 | [G-14](#g-14) | Low | all | pre-commit defaults pin 2024 revisions | **fixed** — v6.0.0 / v8.30.1 / v2.4.3 |
 | [G-15](#g-15) | Low | Windows | Four bash `run_onchange` scripts have no OS guard | **fixed** — ignored on Windows by target name |
@@ -30,6 +30,9 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-19](#g-19) | Low | Linux | `chsh` to zsh is manual | **fixed** — installer runs `chsh` when interactive |
 | [G-20](#g-20) | Low | all | `me:` URL shortcut renders to `paulwilliams/`, not `skenmy/` | **fixed** — uses `githubUser` |
 | [G-21](#g-21) | Medium | all | `.chezmoiignore` script entries used source names, so they never matched | **fixed** — target names |
+| [G-22](#g-22) | Low | Linux | `import-gpg-key` shebang mangled by a `{{-` trim | **fixed** |
+| [G-23](#g-23) | High | macOS, Linux | A brew-sync merge conflict leaves the source clone mid-rebase; every nightly update then fails silently | **fixed** — workers detect and reset the clone |
+| [G-24](#g-24) | Low | all | codespell `--ignore-words-list` split by YAML; only the first word was ignored | **fixed** — quoted |
 
 ---
 
@@ -176,11 +179,15 @@ managed editor (2026-09-22). Zed's settings template contains no machine-specifi
 
 ## G-12 — No CI on the repo {#g-12}
 
-Before the docs workflow there was no `.github/`. Nothing shellchecks the 13 scripts, renders the
-templates for each OS, or runs the repo's own pre-commit defaults. Suggested additions to
-`.github/workflows/`: `shellcheck` over `scripts/` and `dot_local/private_bin/`; `chezmoi --source . execute-template`
-smoke renders with `--promptBool headless=true,work=true`; a `.pre-commit-config.yaml` copied from
-`dot_config/pre-commit/skenmy-defaults.yaml`.
+**Fixed.** `.github/workflows/ci.yml` runs on every push and PR: (1) `pre-commit run --all-files` with the
+repo's own `.pre-commit-config.yaml` (the shipped defaults plus shellcheck on the workers); (2) a
+`render` matrix over ubuntu/macos/windows × two profiles (`desktop-personal`: headless=false, work=false;
+`server-work`: headless=true, work=true) that runs `chezmoi init` from `.chezmoi.toml.tmpl` with the
+prompt answers supplied by flag, `chezmoi managed`, a full `apply --dry-run` render of every file, a
+render + shellcheck of every `run_*.sh.tmpl` (unix) or a PowerShell parse of every `.ps1.tmpl` (Windows),
+and profile assertions (Brewfile only on macOS, `.gitconfig-eit` only when `work`, `authorized_keys`
+never when `work`, no Zed config when `headless`, Zed settings under `AppData` on Windows). The baseline
+run surfaced G-22 and G-24.
 
 ## G-13 — Neovim `<C-j>` / `<C-k>` double-mapped {#g-13}
 
@@ -212,6 +219,39 @@ chezmoi target names (see G-21), so Windows never attempts them. Consequence: no
 ## G-19 — Default shell on Linux {#g-19}
 
 **Fixed.** The installer runs `chsh -s $(command -v zsh)` when stdin is a terminal and `$SHELL` is not zsh; non-interactive applies skip it and print nothing.
+
+## G-22 — `import-gpg-key` shebang mangled {#g-22}
+
+**Evidence.** The template began `#!/usr/bin/env bash` followed by a `{{- /* … */ -}}` comment; the leading
+`-` trimmed the newline after the shebang, so the rendered first line was
+`#!/usr/bin/env bash# gpg-public-key.asc hash: …`. macOS splits shebang arguments and still ran `bash`,
+so nothing failed there; Linux passes the rest of the line as one argument, so `env` would look for a
+program literally named `bash# gpg-public-key.asc …`. Found by shellcheck (SC2096) in the CI baseline.
+
+**Fixed.** The template comment became a plain `#` comment on its own line.
+
+## G-23 — stuck source clone disables nightly updates {#g-23}
+
+**Evidence.** On this work Mac `~/.local/state/chezmoi-update/last.log` showed `chezmoi update exited 1`
+every night from 2026-09-20: *Pulling is not possible because you have unmerged files*. The clone at
+`~/.local/share/chezmoi` was detached mid-rebase with `UU Brewfile`: two Macs' brew-sync runs had appended
+to the same lines the same night, the pull-with-rebase stopped on the conflict, and nothing recovered or
+alerted. Every later `chezmoi update` (a pull followed by apply) failed until noticed.
+
+**Fixed.** Both workers treat the clone as disposable, since `origin/main` is the truth.
+`chezmoi-update-and-notify` checks for a rebase in progress or unmerged status entries before and after
+`chezmoi update`; if found it aborts the rebase, returns to `main` at `origin/main`, drops autostash
+leftovers, logs what it did and retries once. `dotfiles-brew-sync` does the same when its own pull fails
+and re-detects the drift the next night. The affected Mac had to be recovered by hand once (abort the
+rebase, switch back to `main`, discard the conflicted Brewfile, fast-forward).
+
+## G-24 — codespell ignore list split by YAML {#g-24}
+
+**Evidence.** `args: [--ignore-words-list=crate,hist]` is a YAML flow sequence; commas separate items, so
+codespell received `--ignore-words-list=crate` plus `hist` as a file path. The shipped defaults had the
+bug; the repo's own config inherited it and failed on `fpr` in `seed-bitwarden.sh` until diagnosed.
+
+**Fixed.** Quoted in both files: `args: ["--ignore-words-list=…"]`, with a comment explaining why.
 
 ## G-21 — `.chezmoiignore` script entries never matched {#g-21}
 

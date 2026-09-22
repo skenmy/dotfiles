@@ -32,4 +32,6 @@ repos:
     rev: v2.4.3
     hooks:
       - id: codespell        # typo finder; allow per-project via .codespellrc
-        args: [--ignore-words-list=crate,hist]
+        # Quoted on purpose: an unquoted [a,b] is a YAML list, so only the first
+        # word was ever ignored and the rest were passed as file paths.
+        args: ["--ignore-words-list=crate,hist"]

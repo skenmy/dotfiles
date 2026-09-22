@@ -22,7 +22,8 @@ result at 04:32.
 
 Runs `chezmoi update --force` (git pull with rebase + apply, **overwriting local edits to managed
 files**), then logs "no changes" or the range of commits that landed. Despite the name it does not
-notify anything.
+notify anything. If the source clone is mid-rebase or has unmerged files (see [G-23](../gaps.md#g-23)),
+it resets the clone to `origin/main` first, and once more after a failed update, then retries.
 
 ### dotfiles-brew-sync
 
@@ -35,7 +36,9 @@ notify anything.
    `# auto-synced from <host> on <date>`; `<target>` comes from `~/.config/dotfiles/brew-sync-target`
    (templated: `common` when `work`, else `personal`).
 5. `git pull --rebase --autostash`, **signed** commit directly to `main`, push. If signing fails the
-   change stays staged and is retried tomorrow; nothing is ever committed unsigned.
+   change stays staged and is retried tomorrow; nothing is ever committed unsigned. If the pull itself
+   fails (another Mac appended to the same fragment tonight), the clone is reset to `origin/main`, the
+   append is dropped and re-detected tomorrow.
 
 Append-only by design: uninstalling locally never removes a line. Comparing names rather than whole
 lines is what stopped the duplicate re-appends recorded in [G-04](../gaps.md#g-04).

@@ -163,6 +163,20 @@ Rotate a secret: update it locally, run `~/.local/share/chezmoi/scripts/seed-bit
 machine (upserts the four items), then re-run `scripts/bootstrap.sh` on other boxes. Never commit
 anything private; the repo is public.
 
+## Before you push: what CI checks
+
+`.github/workflows/ci.yml` runs on every PR and push to `main`:
+
+- `pre-commit run --all-files` with `.pre-commit-config.yaml` (whitespace, EOF, YAML/JSON/TOML validity,
+  merge markers, large files, private keys, gitleaks, codespell, shellcheck on the workers). Run it
+  locally with `uvx pre-commit run --all-files`, or `pre-commit install` once to get it on every commit.
+- A render matrix: ubuntu, macos and windows runners × `desktop-personal` and `server-work` profiles.
+  Each renders the config from `.chezmoi.toml.tmpl`, lists managed targets, dry-run-applies every file,
+  shellchecks every rendered `run_*.sh` (or parses every `.ps1`), and asserts per-profile facts. If you
+  add a prompt to `.chezmoi.toml.tmpl`, add its **prompt text** to the `--promptString`/`--promptBool`
+  flags in the workflow, and extend the assertions when you add a profile-gated file.
+- The `docs` workflow builds the site with `--strict` and runs the generator's unit tests.
+
 ## Keep this site accurate
 
 - **Generated pages** need nothing: the `docs` workflow rebuilds them from `main` on every push.

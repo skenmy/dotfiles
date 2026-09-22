@@ -62,7 +62,18 @@ normalise() {
 commit_and_push() {
     # $1 = commit message. Signed with the normal git config; no fallback.
     cd "$SRC" || return 1
-    git pull --rebase --autostash >>"$LOG" 2>&1 || { say "git pull failed — commit deferred to next run"; return 1; }
+    if ! git pull --rebase --autostash >>"$LOG" 2>&1; then
+        # Usually another Mac appended to the same fragment tonight and the
+        # autostash/rebase conflicted. The clone is disposable: drop our append,
+        # go back to origin/main, and let tomorrow's run re-detect the drift.
+        # Leaving the rebase half-done would break every nightly chezmoi update.
+        say "git pull failed (conflict?) — resetting source clone to origin/main; drift re-detected tomorrow"
+        git rebase --abort >/dev/null 2>&1 || true
+        git checkout -q -f main 2>/dev/null || true
+        git fetch -q origin && git reset -q --hard origin/main
+        while git stash list | grep -q .; do git stash drop -q; done
+        return 1
+    fi
     git add -- "$FRAG_DIR"
     if ! git commit -m "$1" >>"$LOG" 2>&1; then
         say "git commit failed (signing key unavailable to launchd?) — change left staged, retry tomorrow"

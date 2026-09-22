@@ -1,0 +1,125 @@
+name: ci
+
+# Repo self-checks (G-12): the same pre-commit safety net the dotfiles ship
+# to every project, shellcheck over the workers and rendered run scripts, and
+# a template render of every profile on every OS so a bad `{{ }}` can never
+# reach the nightly chezmoi update.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet pre-commit
+      - run: pre-commit run --all-files --show-diff-on-failure
+
+  render:
+    name: render (${{ matrix.os }}, ${{ matrix.profile }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        profile: [desktop-personal, server-work]
+        include:
+          - { profile: desktop-personal, headless: "false", work: "false" }
+          - { profile: server-work,      headless: "true",  work: "true"  }
+        exclude:
+          - { os: windows-latest, profile: server-work }
+    runs-on: ${{ matrix.os }}
+    env:
+      # chezmoi uses this for gitHubKeys (authorized_keys); avoids the
+      # unauthenticated API limit shared by all runners.
+      CHEZMOI_GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Isolated config home so prompt*Once never finds an existing config.
+      XDG_CONFIG_HOME: ${{ runner.temp }}/xdg
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install chezmoi (unix)
+        if: runner.os != 'Windows'
+        run: |
+          sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install chezmoi (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          iex "&{$(irm 'https://get.chezmoi.io/ps1')} -b $HOME/.local/bin"
+          Add-Content $env:GITHUB_PATH "$HOME\.local\bin"
+
+      - name: Render config from .chezmoi.toml.tmpl for this profile
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/home"
+          # --prompt* flags are keyed by the PROMPT TEXT in .chezmoi.toml.tmpl, not the variable name.
+          chezmoi init --source "$PWD" --config-path "$RUNNER_TEMP/chezmoi.toml" \
+            --destination "$RUNNER_TEMP/home" \
+            --promptString "Full name=CI Bot" \
+            --promptString "Email=ci@example.com" \
+            --promptString "Commit signing: GPG key ID to trust (empty disables signing)=ABCDEF0123456789" \
+            --promptBool "Is this a headless server (skip GUI configs)?=${{ matrix.headless }}" \
+            --promptBool "Is this a work machine?=${{ matrix.work }}" </dev/null
+          grep -E 'headless|work' "$RUNNER_TEMP/chezmoi.toml"
+          echo "CHEZMOI_ARGS=--source $PWD --config $RUNNER_TEMP/chezmoi.toml --destination $RUNNER_TEMP/home" >> "$GITHUB_ENV"
+
+      - name: List managed targets for this profile
+        shell: bash
+        run: chezmoi $CHEZMOI_ARGS managed | sort | tee "$RUNNER_TEMP/managed.txt" | wc -l
+
+      - name: Render every file and script (no scripts executed)
+        shell: bash
+        run: chezmoi $CHEZMOI_ARGS apply --dry-run --verbose --exclude=scripts 2>&1 | tail -20
+
+      - name: Render run scripts and shellcheck them (unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then brew install --quiet shellcheck; else sudo apt-get install -y -q shellcheck; fi
+          mkdir -p "$RUNNER_TEMP/scripts"
+          for f in run_*.sh.tmpl; do
+            out="$RUNNER_TEMP/scripts/${f%.tmpl}"
+            chezmoi $CHEZMOI_ARGS execute-template < "$f" > "$out"
+            if [ -s "$out" ]; then echo "--- $f"; shellcheck -S warning -s bash "$out"; fi
+          done
+
+      - name: Parse PowerShell scripts (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $args = $env:CHEZMOI_ARGS -split ' '
+          Get-ChildItem *.ps1.tmpl | ForEach-Object {
+            $rendered = Get-Content $_ -Raw | & chezmoi @args execute-template
+            if ($rendered.Trim()) {
+              $errors = $null
+              [System.Management.Automation.Language.Parser]::ParseInput($rendered, [ref]$null, [ref]$errors) | Out-Null
+              if ($errors) { $errors | ForEach-Object { Write-Error "$($_.Extent.File): $_" }; exit 1 }
+              Write-Host "parsed OK: $($_.Name)"
+            }
+          }
+
+      - name: Profile sanity assertions
+        shell: bash
+        run: |
+          m="$RUNNER_TEMP/managed.txt"
+          assert_has()    { grep -qx "$1" "$m" || { echo "expected $1 to be managed"; exit 1; }; }
+          assert_absent() { grep -qx "$1" "$m" && { echo "expected $1 NOT to be managed"; exit 1; } || true; }
+          case "$RUNNER_OS" in
+            macOS)   assert_has Brewfile; assert_has Library/LaunchAgents/com.skenmy.chezmoi-update.plist ;;
+            Linux)   assert_absent Brewfile; assert_has .config/systemd/user/chezmoi-update.timer ;;
+            Windows) assert_absent Brewfile; assert_has Documents/PowerShell/Microsoft.PowerShell_profile.ps1; assert_has AppData/Roaming/Zed/settings.json ;;
+          esac
+          if [ "${{ matrix.work }}" = "true" ]; then assert_has .gitconfig-eit; assert_absent .ssh/authorized_keys; else assert_absent .gitconfig-eit; fi
+          if [ "${{ matrix.headless }}" = "true" ] && [ "$RUNNER_OS" != "Windows" ]; then assert_absent .config/zed/settings.json; fi
+          echo "profile assertions OK"

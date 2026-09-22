@@ -34,7 +34,7 @@ KEYCHAIN_ENTRY="${KEYCHAIN_ENTRY:-bw-master}"
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
-c_blue=$'\033[1;34m' c_green=$'\033[1;32m' c_red=$'\033[1;31m' c_dim=$'\033[2m' c_reset=$'\033[0m'
+c_blue=$'\033[1;34m' c_green=$'\033[1;32m' c_red=$'\033[1;31m' c_reset=$'\033[0m'
 log()  { printf "%s==>%s %s\n" "$c_blue"  "$c_reset" "$*"; }
 ok()   { printf "%s ✓%s  %s\n" "$c_green" "$c_reset" "$*"; }
 warn() { printf "%s !!%s %s\n" "$c_red"   "$c_reset" "$*" >&2; }
@@ -85,7 +85,6 @@ ensure_bw() {
         elif has npm; then
             sudo npm install -g @bitwarden/cli
         else
-            local arch=x64; [ "$(uname -m)" = "aarch64" ] && arch=arm64
             local tmp; tmp="$(mktemp -d)"
             curl -fsSL "https://vault.bitwarden.com/download/?app=cli&platform=linux" -o "$tmp/bw.zip"
             unzip -q "$tmp/bw.zip" -d "$HOME/.local/bin"

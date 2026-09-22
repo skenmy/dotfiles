@@ -6,6 +6,7 @@ One source of truth → applied identically to every MacBook, Windows PC, and Li
 
 > **Audit site:** what every profile installs and changes, known gaps, and how to change things —
 > <https://skenmy.github.io/dotfiles/> (built from `docs/` + `scripts/docsgen` by the `docs` workflow).
+> **CI:** `ci.yml` runs pre-commit (incl. shellcheck) and renders every template for each OS × profile on every PR.
 
 ---
 
