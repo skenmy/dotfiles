@@ -165,10 +165,12 @@ class ChezmoiNamingTests(unittest.TestCase):
         self.assertTrue(info.is_executable)
         self.assertTrue(info.is_private)
 
-    def test_scripts_have_no_target(self):
+    def test_scripts_use_chezmoi_target_name(self):
         info = p.source_to_target("run_onchange_after_brew-bundle.sh.tmpl")
         self.assertTrue(info.is_script)
-        self.assertEqual(info.target, "run_onchange_after_brew-bundle.sh")
+        self.assertEqual(info.target, "brew-bundle.sh")
+        self.assertEqual(p.script_target_name("run_once_install-packages-darwin.sh"), "install-packages-darwin.sh")
+        self.assertEqual(p.script_target_name("run_once_after_macos-defaults.sh"), "macos-defaults.sh")
 
     def test_plain_files_keep_their_name(self):
         self.assertEqual(p.source_to_target("Brewfile").target, "~/Brewfile")

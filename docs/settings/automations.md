@@ -6,7 +6,7 @@
 
 | Job | Schedule (local) | macOS | Linux | Windows | Worker | Log |
 |---|---|---|---|---|---|---|
-| Dotfiles update | 03:17 daily | launchd `com.skenmy.chezmoi-update` (all Macs) | systemd user timer `chezmoi-update.timer`, +30 min jitter, `Persistent=true` | none | `~/.local/bin/chezmoi-update-and-notify` | `~/.local/state/chezmoi-update/last.log` |
+| Dotfiles update | 03:17 daily | launchd `com.skenmy.chezmoi-update` (all Macs) | systemd user timer `chezmoi-update.timer`, +30 min jitter, `Persistent=true` | Scheduled Task `skenmy-chezmoi-update`, `StartWhenAvailable`, logged-on only | `~/.local/bin/chezmoi-update-and-notify` (`.ps1` on Windows) | `~/.local/state/chezmoi-update/last.log` |
 | Brewfile sync | 02:00 daily | launchd `com.skenmy.dotfiles-brew-sync` (desktop only) | – | – | `~/.local/bin/dotfiles-brew-sync` | `~/.local/state/dotfiles-brew-sync/last.log` |
 | restic backup | 04:32 daily | launchd `com.skenmy.restic-backup` (desktop only) | systemd `restic-backup.timer`, +30 min jitter, `Nice=10`, idle I/O | – | `~/.local/bin/restic-backup` | `~/.local/state/restic/last.log` |
 
@@ -50,6 +50,7 @@ which the scripts exploit by embedding `{{ include "<file>" | sha256sum }}` of t
 | `run_once_install-packages-darwin.sh.tmpl` | macOS | script changes | Homebrew, `brew bundle`, TPM, fzf bindings |
 | `run_once_install-packages-linux.sh.tmpl` | Linux | script changes | distro packages, upstream installers, antidote, TPM |
 | `run_once_install-packages-windows.ps1.tmpl` | Windows | script changes | winget packages, PSReadLine |
+| `run_onchange_after_install-update-task.ps1.tmpl` | Windows | worker `.ps1` | register Scheduled Task, set `XDG_CONFIG_HOME` |
 | `run_once_after_macos-defaults.sh.tmpl` | macOS, not headless | script changes | 42 `defaults write`, restarts Dock/Finder/SystemUIServer |
 | `run_onchange_after_brew-bundle.sh.tmpl` | macOS | `Brewfile.tmpl` + all three fragments | `brew bundle` (`--no-upgrade` if headless) |
 | `run_onchange_after_install-update-timer.sh.tmpl` | macOS + Linux | plist, units, worker | reload launchd agent / enable systemd timer |
@@ -60,7 +61,7 @@ which the scripts exploit by embedding `{{ include "<file>" | sha256sum }}` of t
 | `run_onchange_after_build-allowed-signers.sh.tmpl` | all (bash) | `email`, `work` | rewrite `~/.ssh/allowed_signers` |
 | `run_onchange_after_update-tldr-cache.sh.tmpl` | all (bash) | version stamp comment | `tldr --update` |
 
-"all (bash)" scripts have no OS guard and will be attempted on Windows too ([G-15](../gaps.md#g-15)).
+"all (bash)" scripts are ignored on Windows via `.chezmoiignore` (target names, see [G-21](../gaps.md#g-21)), so they run on macOS and Linux only.
 
 ## Template-time network calls
 

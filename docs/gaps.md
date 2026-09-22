@@ -13,7 +13,7 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-02](#g-02) | High | Linux | Neovim config needs 0.11+, distros ship 0.7–0.9 | **fixed** — upstream tarball to `~/.local/nvim` when distro nvim < 0.11 |
 | [G-03](#g-03) | High | macOS work, macOS headless | Brewfile is not profile-aware: every cask on every Mac | **fixed** — fragments in `.chezmoitemplates/brew/` |
 | [G-04](#g-04) | High | macOS | brew-sync re-appends commented lines; 6 duplicates, two cask-name pairs | **fixed** — name-based diff, Brewfile deduped |
-| [G-05](#g-05) | High | Windows | No auto-update, no bootstrap, signing key never provisioned, nvim config in wrong place | open |
+| [G-05](#g-05) | High | Windows | No auto-update, no bootstrap, signing key never provisioned, nvim config in wrong place | **fixed** — Scheduled Task, `bootstrap.ps1`, XDG_CONFIG_HOME, ControlMaster guard |
 | [G-06](#g-06) | Medium | Linux (Arch, Alpine) | Debian package names break pacman/apk; dead headless branch | **fixed** — per-manager names; headless branch now gates Zed + font |
 | [G-07](#g-07) | Medium | all | `authorized_keys` needs GitHub at every apply; personal keys land on work boxes | **fixed** — unmanaged on work; 168h API cache |
 | [G-08](#g-08) | Medium | work | Work profile expects `id_ed25519_skenmy` / `_eit`; bootstrap writes `id_ed25519` | **fixed** — bootstrap names the key by the work flag |
@@ -23,12 +23,13 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-12](#g-12) | Medium | repo | No CI or pre-commit on the repo itself | partly fixed by the docs workflow |
 | [G-13](#g-13) | Low | all | Neovim `<C-j>`/`<C-k>` mapped twice | open |
 | [G-14](#g-14) | Low | all | pre-commit defaults pin 2024 revisions | open |
-| [G-15](#g-15) | Low | Windows | Four bash `run_onchange` scripts have no OS guard | open |
+| [G-15](#g-15) | Low | Windows | Four bash `run_onchange` scripts have no OS guard | **fixed** — ignored on Windows by target name |
 | [G-16](#g-16) | Low | all | Identity emails hard-coded in four places | **fixed** — `.chezmoidata/identity.toml` |
 | [G-17](#g-17) | Low | Linux desktop | tmux copy assumes `pbcopy`/`xclip`; no Wayland; no Nerd Font installed | **fixed** — `wl-copy` fallback; JetBrainsMono Nerd Font installed on desktops |
 | [G-18](#g-18) | Low | macOS | brew-sync commits unsigned, straight to `main` | **fixed** — commits are signed; unsigned fallback removed |
 | [G-19](#g-19) | Low | Linux | `chsh` to zsh is manual | **fixed** — installer runs `chsh` when interactive |
 | [G-20](#g-20) | Low | all | `me:` URL shortcut renders to `paulwilliams/`, not `skenmy/` | **fixed** — uses `githubUser` |
+| [G-21](#g-21) | Medium | all | `.chezmoiignore` script entries used source names, so they never matched | **fixed** — target names |
 
 ---
 
@@ -114,11 +115,16 @@ run added `cask "claude-code@latest"` next to `cask "claude-code"` and `cask "ta
 - `~/.ssh/config` sets `ControlMaster`/`ControlPath`, which Windows OpenSSH does not support.
 - `~/.config/dotfiles/tips` and `~/.config/direnv/direnvrc` are deployed with nothing to consume them.
 
-**Fix.** Add `run_once_after_register-update-task.ps1.tmpl` using `Register-ScheduledTask`; write
-`scripts/bootstrap.ps1` (Bitwarden CLI is available via winget as `Bitwarden.CLI`); wrap the
-`ControlMaster` block in `{{ if ne .chezmoi.os "windows" }}`; either set `$env:XDG_CONFIG_HOME = "$HOME\.config"`
-in the PowerShell profile or add a Windows-only `AppData/Local/nvim` source; ignore `.config/direnv`
-and `.config/dotfiles` on Windows.
+**Fixed.** `run_onchange_after_install-update-task.ps1.tmpl` registers the per-user Scheduled Task
+`skenmy-chezmoi-update` (daily 03:17, runs when logged on, catches up after sleep) driving the new
+`~/.local/bin/chezmoi-update-and-notify.ps1` worker, and sets `XDG_CONFIG_HOME=%USERPROFILE%\.config`
+user-wide (the PowerShell profile also sets it per session) so Neovim, atuin and mise read the same
+`~/.config` tree as on macOS/Linux. `scripts/bootstrap.ps1` installs chezmoi + `Bitwarden.CLI`, runs
+`chezmoi init --apply`, writes the SSH key (named by the `work` flag), imports GPG when a `gpg.exe`
+exists, and logs atuin in. `ControlMaster`/`ControlPath`/`ControlPersist` are wrapped in
+`{{ if ne .chezmoi.os "windows" }}`. `.config/direnv`, `.config/dotfiles`, `.config/pre-commit`, the
+bash workers and every bash run script are ignored on Windows. Still absent on Windows by choice:
+restic, tmux, tips, `gh dash`, tealdeer cache refresh.
 
 ## G-06 — Linux installer portability {#g-06}
 
@@ -189,9 +195,9 @@ defaults file periodically.
 
 ## G-15 — Unguarded bash scripts on Windows {#g-15}
 
-`build-allowed-signers`, `import-gpg-key`, `install-gh-extensions`, `update-tldr-cache` have no OS guard.
-chezmoi on Windows runs `.sh` scripts through `sh` only if one is on `PATH` (Git for Windows); otherwise
-apply errors. Wrap each in `{{ if ne .chezmoi.os "windows" }}`.
+**Fixed.** All eight bash run scripts are listed in the Windows block of `.chezmoiignore` under their
+chezmoi target names (see G-21), so Windows never attempts them. Consequence: no GPG import,
+`allowed_signers` rebuild, `gh dash` or tealdeer refresh on Windows; `bootstrap.ps1` covers GPG.
 
 ## G-16 — Identity emails hard-coded {#g-16}
 
@@ -208,6 +214,18 @@ apply errors. Wrap each in `{{ if ne .chezmoi.os "windows" }}`.
 ## G-19 — Default shell on Linux {#g-19}
 
 **Fixed.** The installer runs `chsh -s $(command -v zsh)` when stdin is a terminal and `$SHELL` is not zsh; non-interactive applies skip it and print nothing.
+
+## G-21 — `.chezmoiignore` script entries never matched {#g-21}
+
+**Evidence.** Found while adding Windows entries: `chezmoi managed` still listed `install-packages-windows.ps1`
+on macOS despite `run_once_install-packages-windows.ps1` being in `.chezmoiignore`. chezmoi strips the
+`run_once_`/`run_onchange_`/`before_`/`after_` attributes to form a script's **target name**, and
+`.chezmoiignore` matches target names. The original darwin/linux entries were therefore inert; nothing
+broke only because every script also had an OS guard inside its template that rendered it empty.
+
+**Fixed.** All script entries use target names (`install-packages-darwin.sh`, `brew-bundle.sh`, …), a
+comment at the top of `.chezmoiignore` explains the rule, and the generated
+[file inventory](generated/files.md) now shows the target name for every script so the two can be compared.
 
 ## G-20 — `me:` shortcut renders the wrong owner {#g-20}
 

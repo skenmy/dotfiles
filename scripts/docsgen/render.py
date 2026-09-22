@@ -146,7 +146,8 @@ def render_tips(tips: list[tuple[str, str]]) -> str:
 
 
 def render_files(sources: list[str], ignored: list[str]) -> str:
-    body = "Every tracked source file and where chezmoi puts it. Rows marked *not deployed* are "
+    body = "Every tracked source file and where chezmoi puts it. Scripts show chezmoi's target name, "
+    body += "which is what `.chezmoiignore` must match. Rows marked *not deployed* are "
     body += "unconditionally excluded by `.chezmoiignore`; per-profile exclusions are on the Profiles page.\n\n"
     rows = []
     for source in sources:

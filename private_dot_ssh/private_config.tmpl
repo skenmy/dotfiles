@@ -10,9 +10,12 @@ Host *
     HashKnownHosts no
     StrictHostKeyChecking accept-new
     VisualHostKey yes
+{{- if ne .chezmoi.os "windows" }}
+    # Connection multiplexing — Windows OpenSSH does not implement ControlMaster.
     ControlMaster auto
     ControlPath ~/.ssh/cm-%r@%h:%p
     ControlPersist 10m
+{{- end }}
 {{- if eq .chezmoi.os "darwin" }}
     UseKeychain yes
 {{- if .work }}

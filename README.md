@@ -43,7 +43,11 @@ Tailscale is installed automatically by `bootstrap.sh` on personal boxes (it's s
 iex "&{$(irm 'https://get.chezmoi.io/ps1')} -b $HOME/.local/bin init --apply skenmy"
 ```
 
-Note: no Bitwarden integration on Windows yet — GPG / SSH / atuin still need importing by hand.
+Or, with Bitwarden secrets (SSH key, GPG, atuin) and the daily update task in one go:
+
+```powershell
+iex "& { $(irm https://raw.githubusercontent.com/skenmy/dotfiles/main/scripts/bootstrap.ps1) }"
+```
 
 **That's it for every-box setup.** Everything below is one-time-ever or optional.
 

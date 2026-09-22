@@ -41,7 +41,7 @@ this section list every entry; this page explains how they are wired.
 
 - `run_once_install-packages-windows.ps1.tmpl` installs 20 winget IDs (`--exact --silent`, including Zed) and the
   latest PSReadLine module. It exits early with a message if winget is missing.
-- No Bitwarden, restic, tmux, GnuPG, direnv, pre-commit, k8s tooling, or auto-update timer.
+- `scripts/bootstrap.ps1` handles Bitwarden secrets; a Scheduled Task runs the nightly update. Still absent: restic, tmux, GnuPG (use Git for Windows' `gpg`), direnv, pre-commit, k8s tooling.
 
 → [Windows inventory](../generated/windows.md)
 

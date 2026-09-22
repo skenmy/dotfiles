@@ -41,8 +41,10 @@ if the source dir exists) → SSH key → a second `chezmoi apply` so `allowed_s
 login and sync. Re-runnable.
 `scripts/seed-bitwarden.sh` pushes the same four items from a machine that already has the secrets.
 
-Windows has no equivalent; the message at the top of `bootstrap.sh` points at a `scripts/bootstrap.ps1`
-that does not exist ([G-05](../gaps.md#g-05)).
+`scripts/bootstrap.ps1` is the Windows counterpart: winget installs chezmoi and `Bitwarden.CLI`, then
+`chezmoi init --apply`, SSH key (named by the `work` flag, ACL restricted to the user), GPG import if a
+`gpg.exe` is on `PATH`, atuin login and sync. It does not pull the restic env because nothing schedules
+restic on Windows.
 
 ## Per-machine override files (never managed)
 

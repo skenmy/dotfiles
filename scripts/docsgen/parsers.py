@@ -274,6 +274,7 @@ def parse_tmux_plugins(text: str) -> list[str]:
 # --------------------------------------------------------------------------
 
 SCRIPT_PREFIXES = ("run_once_", "run_onchange_", "run_")
+SCRIPT_ORDER_PREFIXES = ("before_", "after_")
 COMPONENT_PREFIXES = (
     "private_", "readonly_", "executable_", "exact_", "symlink_", "modify_",
     "create_", "remove_", "empty_", "encrypted_", "literal_",
@@ -305,13 +306,30 @@ def _strip_component(component: str) -> tuple[str, bool, bool]:
     return name, is_private, is_executable
 
 
+def script_target_name(filename: str) -> str:
+    """chezmoi's target name for a run script: run_/once_/onchange_/before_/after_ stripped.
+
+    This is the name .chezmoiignore must use (e.g. `install-packages-darwin.sh`).
+    """
+    name = filename
+    for prefix in SCRIPT_PREFIXES:
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+            break
+    for prefix in SCRIPT_ORDER_PREFIXES:
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+            break
+    return name
+
+
 def source_to_target(source_path: str) -> TargetInfo:
     """Map a chezmoi source path to the destination it renders to."""
     is_template = source_path.endswith(".tmpl")
     path = source_path[: -len(".tmpl")] if is_template else source_path
     components = path.split("/")
     if components[-1].startswith(SCRIPT_PREFIXES):
-        return TargetInfo(components[-1], is_template, False, True, True)
+        return TargetInfo(script_target_name(components[-1]), is_template, False, True, True)
     cleaned: list[str] = []
     is_private = is_executable = False
     for component in components:

@@ -55,7 +55,7 @@ tty_in() {
 case "$(uname -s)" in
     Darwin) OS=darwin ;;
     Linux)  OS=linux  ;;
-    *)      die "Unsupported OS: $(uname -s). Use scripts/bootstrap.ps1 on Windows." ;;
+    *)      die "Unsupported OS: $(uname -s). On Windows run scripts/bootstrap.ps1 (see README)." ;;
 esac
 
 # ---------------------------------------------------------------------------
