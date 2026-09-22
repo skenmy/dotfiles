@@ -23,28 +23,36 @@ disable or revert SSH commit signing.
 
 ### Add a package everywhere (macOS)
 
-Append `brew "name"` or `cask "name"` to `Brewfile`. Or just `brew install name` on any Mac and let the
-02:00 brew-sync commit it for you. Either way `brew bundle` re-runs on every Mac at the next apply.
+Append `brew "name"` to `.chezmoitemplates/brew/common.Brewfile` (or `cask "name"` to `gui.Brewfile`, since
+casks need a display). Or just `brew install name` on any Mac and let the 02:00 brew-sync commit it to
+that machine's target fragment (`common` on work Macs, `personal` elsewhere); move the line afterwards
+if it belongs in a different fragment. Either way `brew bundle` re-runs on every affected Mac at the next apply.
 
 ### Remove a package everywhere (macOS)
 
-Delete the line from `Brewfile` **and** any duplicate of it (search the whole file; brew-sync may have
-appended a second copy under an `# auto-synced` header). Removing a line does not uninstall anywhere.
-On each Mac that should lose it: `brew uninstall name`. If you do not uninstall locally, brew-sync will
-re-append the line on that machine's next run unless you also add `^brew "name"$` to
-`~/.config/dotfiles/brew-sync-ignore` there.
+Delete the line from whichever fragment holds it (`grep -rn '"name"' .chezmoitemplates/brew/`). Removing a
+line does not uninstall anywhere. On each Mac that should lose it: `brew uninstall name`. If you do not
+uninstall locally, brew-sync will re-append the line on that machine's next run unless you also add
+`^brew "name"$` to `~/.config/dotfiles/brew-sync-ignore` there.
 
 ### Remove a package from one profile only
 
-Not possible from source today: `Brewfile` is not a template ([G-03](gaps.md#g-03)). What you can do now:
+Move the line between fragments in `.chezmoitemplates/brew/`:
 
-- **Per machine, permanently:** `brew uninstall name` then add `^cask "name"$` to that machine's
-  `~/.config/dotfiles/brew-sync-ignore`. The line stays in the Brewfile, so the next `brew bundle`
-  (triggered whenever the Brewfile changes) **reinstalls it**. This only works for `brew bundle
-  --no-upgrade` headless boxes if the formula is absent, i.e. it does not work.
-- **Properly:** implement the fragment split in [G-03](gaps.md#g-03). After that, moving a line from
-  `brew/common.Brewfile` to `brew/personal.Brewfile` removes it from work Macs, and to `brew/gui.Brewfile`
-  removes it from headless ones.
+| Move to | Installed on |
+|---|---|
+| `common.Brewfile` | every Mac |
+| `gui.Brewfile` | Macs with `headless = false` |
+| `personal.Brewfile` | Macs with `work = false` (regardless of headless) |
+
+Nothing is uninstalled on machines that already have it: run `brew uninstall name` there. brew-sync
+diffs against the union of all fragments, so a package gated to another profile is never re-added.
+A finer gate (say, personal **and** desktop) means adding a fourth fragment and a matching
+`{{ if and (not .work) (not .headless) }}` block in `Brewfile.tmpl`.
+
+For a one-machine exception that should never reach the repo, `brew uninstall name` plus a line in
+`~/.config/dotfiles/brew-sync-ignore`; note the next fragment change re-runs `brew bundle` and
+reinstalls anything still listed for that profile.
 
 ### Add or remove a Linux package
 

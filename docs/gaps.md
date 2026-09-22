@@ -11,8 +11,8 @@ Severity: **High** = something is broken or lands on machines that should not ge
 |---|---|---|---|---|
 | [G-01](#g-01) | High | Linux | Tools the configs depend on are never installed (delta, eza, lazygit, gh, direnv, …) | open |
 | [G-02](#g-02) | High | Linux | Neovim config needs 0.11+, distros ship 0.7–0.9 | open |
-| [G-03](#g-03) | High | macOS work, macOS headless | Brewfile is not profile-aware: every cask on every Mac | open |
-| [G-04](#g-04) | High | macOS | brew-sync re-appends commented lines; 6 duplicates, two cask-name pairs | open |
+| [G-03](#g-03) | High | macOS work, macOS headless | Brewfile is not profile-aware: every cask on every Mac | **fixed** — fragments in `.chezmoitemplates/brew/` |
+| [G-04](#g-04) | High | macOS | brew-sync re-appends commented lines; 6 duplicates, two cask-name pairs | **fixed** — name-based diff, Brewfile deduped |
 | [G-05](#g-05) | High | Windows | No auto-update, no bootstrap, signing key never provisioned, nvim config in wrong place | open |
 | [G-06](#g-06) | Medium | Linux (Arch, Alpine) | Debian package names break pacman/apk; dead headless branch | open |
 | [G-07](#g-07) | Medium | all | `authorized_keys` needs GitHub at every apply; personal keys land on work boxes | open |
@@ -26,7 +26,7 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-15](#g-15) | Low | Windows | Four bash `run_onchange` scripts have no OS guard | open |
 | [G-16](#g-16) | Low | all | Identity emails hard-coded in four places | open |
 | [G-17](#g-17) | Low | Linux desktop | tmux copy assumes `pbcopy`/`xclip`; no Wayland; no Nerd Font installed | open |
-| [G-18](#g-18) | Low | macOS | brew-sync commits unsigned, straight to `main` | accepted trade-off, revisit |
+| [G-18](#g-18) | Low | macOS | brew-sync commits unsigned, straight to `main` | **fixed** — commits are signed; unsigned fallback removed |
 | [G-19](#g-19) | Low | Linux | `chsh` to zsh is manual | open |
 | [G-20](#g-20) | Low | all | `me:` URL shortcut renders to `paulwilliams/`, not `skenmy/` | open |
 
@@ -76,7 +76,7 @@ machine may need a paid licence. Headless Macs pull down GUI apps and fonts they
 "Remove a package for one profile" is currently impossible from source; see the
 [how-to](howto.md#remove-a-package-from-one-profile-only).
 
-**Fix sketch.** Split into fragments and render one `Brewfile` from a template:
+**Fixed.** `Brewfile` is now rendered by `Brewfile.tmpl` from three fragments, and brew-sync diffs against their union and appends to the fragment named in `~/.config/dotfiles/brew-sync-target` (templated: `common` on work Macs, `personal` elsewhere). Original sketch kept for the record:
 
 ```
 Brewfile.tmpl:
@@ -99,10 +99,7 @@ on whole lines. Original lines such as `brew "tealdeer"       # fast tldr pages`
 run added `cask "claude-code@latest"` next to `cask "claude-code"` and `cask "tailscale-app"` next to
 `cask "tailscale"`, so each Mac now tries to install both variants.
 
-**Fix.** Normalise before comparing: strip trailing comments and whitespace (`sed -E 's/[[:space:]]*#.*$//'`)
-and compare the `kind "name"` token only. Then dedupe the Brewfile by hand once and pick one cask name
-per pair (`brew info --cask tailscale tailscale-app claude-code claude-code@latest` shows which are
-current).
+**Fixed.** `normalise()` in `dotfiles-brew-sync` reduces every line to `kind "name"` before comparing. The fragments were deduped by hand; `brew info` showed `tailscale-app` and `claude-code@latest` as the live casks, so `tailscale` and `claude-code` were dropped. `brew bundle` will not uninstall the stale variants on machines that already have them.
 
 ## G-05 — Windows is a second-class profile {#g-05}
 
@@ -215,9 +212,7 @@ so starship/eza glyphs render as boxes in a local terminal (fine over SSH from a
 
 ## G-18 — brew-sync bypasses PR and signing {#g-18}
 
-Nightly commits are unsigned and pushed straight to `main`, which otherwise enforces signed commits via
-PR. Documented and accepted in the README. Alternatives if it ever matters: push to a `brew-sync` branch
-and open a PR with `gh pr create --fill`, or allow the sync script to sign with the on-disk SSH key.
+**Fixed.** `dotfiles-brew-sync` now commits with the machine's normal git config, so commits are SSH-signed. If signing fails under launchd (key unavailable), the change stays staged and is retried on the next run; there is no unsigned fallback. Commits still land directly on `main` by design.
 
 ## G-19 — Default shell on Linux {#g-19}
 

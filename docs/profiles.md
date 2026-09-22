@@ -18,7 +18,7 @@ Change any of them later with `chezmoi edit-config` then `chezmoi apply`.
 
 | | macOS desktop | macOS headless | Linux desktop | Linux server (`headless`) | Windows |
 |---|---|---|---|---|---|
-| **Packages** | Homebrew via `Brewfile`, all 81 entries incl. every cask | Same Brewfile, `--no-upgrade`. **Casks still install** | apt/dnf/pacman/apk base list + upstream install scripts | Same as Linux desktop (the headless branch is identical) | 19 winget packages + PSReadLine |
+| **Packages** | Homebrew: `common` + `gui` fragments (+ `personal` unless `work`) | `common` (+ `personal` unless `work`), `--no-upgrade`; no casks | apt/dnf/pacman/apk base list + upstream install scripts | Same as Linux desktop (the headless branch is identical) | 19 winget packages + PSReadLine |
 | **Shell** | zsh + antidote + starship | same | same | same | PowerShell profile + starship |
 | **Neovim config** | ✓ | ✓ | ✓ (but apt Neovim is too old, see [G-02](gaps.md#g-02)) | ✓ (same caveat) | deployed to the wrong path, see [G-05](gaps.md#g-05) |
 | **tmux config** | ✓ | ✓ | ✓ | ✓ | – |
@@ -27,8 +27,8 @@ Change any of them later with `chezmoi edit-config` then `chezmoi apply`.
 | **macOS defaults** | ✓ (42 keys) | – | – | – | – |
 | **Nightly `chezmoi update`** | launchd 03:17 | launchd 03:17 | systemd user timer 03:17 (+30 min jitter) | same, needs `loginctl enable-linger` | **none** |
 | **Nightly restic backup** | launchd 04:32 | **none** | systemd 04:32 (+jitter) | systemd 04:32 | **none** |
-| **Nightly brew-sync** | launchd 02:00 | – | – | – | – |
-| **Tailscale** | cask, on every Mac incl. work | cask | `install.sh` unless `work` | same | – |
+| **Nightly brew-sync** | launchd 02:00 → `common` if work, else `personal` | – | – | – | – |
+| **Tailscale** | `tailscale-app` cask, personal only | same | `install.sh` unless `work` | same | – |
 | **Bitwarden bootstrap** (`scripts/bootstrap.sh`) | ✓ | ✓ | ✓ | ✓ | **none** |
 | **git config** | ✓ SSH signing | ✓ | ✓ | ✓ | ✓ but signing key never provisioned |
 | **ssh config + authorized_keys** | ✓ | ✓ | ✓ | ✓ | ✓ (`ControlMaster` unsupported) |
@@ -53,14 +53,14 @@ Applies on every OS unless stated.
 | `Host github-eit` | absent | pinned to `~/.ssh/id_ed25519_eit`; `eitclone org/repo` zsh helper clones into `~/code/eit/` |
 | `allowed_signers` | personal key only | personal key + EIT key (`pwilliams@eit.org`) |
 | Tailscale on Linux | installed by `install.sh` | skipped (employer-managed) |
-| Tailscale on macOS | cask | **cask still installs** ([G-03](gaps.md#g-03)) |
+| Tailscale on macOS | `tailscale-app` cask | not installed |
 | Starship prompt | identity pill shows `skenmy` or `EIT` based on the resolved commit email | same |
 
 ## What the `headless` flag changes
 
 | OS | Effect |
 |---|---|
-| macOS | Skips Ghostty config, VS Code settings + extensions, macOS defaults, brew-sync timer, **restic timer**; `brew bundle` runs with `--no-upgrade`. Casks are **not** skipped. |
+| macOS | Skips Ghostty config, VS Code settings + extensions, macOS defaults, brew-sync timer, **restic timer**, and the whole `gui.Brewfile` fragment (all casks and fonts); `brew bundle` runs with `--no-upgrade`. |
 | Linux | Skips `~/.config/code/extensions.txt` only. The package list has a headless branch but both branches are identical, so packages are unaffected. |
 | Windows | Skips `~/.config/code/extensions.txt`. Nothing else. |
 

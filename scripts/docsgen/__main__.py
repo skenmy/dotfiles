@@ -14,6 +14,8 @@ from pathlib import Path
 from . import parsers as p
 from . import render as r
 
+BREW_FRAGMENTS = ("common", "gui", "personal")
+
 LINUX_DISTRO_EXTRAS = {
     "apt": "build-essential (+ symlinks batcat→bat, fdfind→fd)",
     "dnf": "@development-tools",
@@ -35,7 +37,11 @@ def tracked_files(repo: Path) -> list[str]:
 
 
 def build_pages(repo: Path) -> dict[str, str]:
-    brew = p.parse_brewfile(read(repo, "Brewfile"))
+    brew = [
+        entry
+        for fragment in BREW_FRAGMENTS
+        for entry in p.parse_brewfile(read(repo, f".chezmoitemplates/brew/{fragment}.Brewfile"), fragment)
+    ]
     linux_script = read(repo, "run_once_install-packages-linux.sh.tmpl")
     linux_common = p.parse_bash_array(linux_script, "COMMON_PKGS")
     linux_guarded = p.parse_guarded_installs(linux_script)

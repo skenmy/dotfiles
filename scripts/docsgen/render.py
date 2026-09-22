@@ -55,28 +55,38 @@ def grouped(items: Iterable, key) -> dict:
 # --------------------------------------------------------------------------
 
 
+FRAGMENT_GATES = {
+    "common": "every macOS box",
+    "gui": "`headless = false` only",
+    "personal": "`work = false` only",
+}
+
+
 def render_brewfile(entries: list[p.BrewEntry]) -> str:
     counts = Counter(entry.kind for entry in entries)
     summary = ", ".join(f"{count} {kind}" for kind, count in sorted(counts.items()))
-    body = f"**{len(entries)} entries** ({summary}). "
-    body += "Applied on every macOS box by `brew bundle`. The Brewfile is not a template, so every macOS profile gets every line.\n\n"
+    body = f"**{len(entries)} entries** ({summary}) across the fragments in `.chezmoitemplates/brew/`, "
+    body += "rendered into `~/Brewfile` by `Brewfile.tmpl` according to the machine's profile.\n\n"
 
     dupes = p.find_duplicates(entries)
     if dupes:
         body += '!!! warning "Duplicate entries"\n'
-        body += "    These names appear more than once. `brew bundle` tolerates it, but each duplicate means "
-        body += "`dotfiles-brew-sync` re-appended a package whose original line carries a trailing comment "
-        body += "(the sync script compares whole lines, not names). See the gap register.\n\n"
-        body += "    | Entry | Lines |\n    |---|---|\n"
+        body += "    These names appear more than once across the fragments. `brew bundle` tolerates it, "
+        body += "but `dotfiles-brew-sync` diffs against the union of fragments, so a duplicate means a hand edit "
+        body += "added a line that already existed elsewhere. Remove one copy.\n\n"
+        body += "    | Entry | Where |\n    |---|---|\n"
         for key, items in dupes.items():
-            body += f"    | {code(key)} | {', '.join(str(i.line) for i in items)} |\n"
+            body += f"    | {code(key)} | {', '.join(f'{i.fragment}:{i.line}' for i in items)} |\n"
         body += "\n"
 
-    for section, items in grouped(entries, lambda e: e.section).items():
-        body += f"## {text(section)}\n\n"
-        rows = [(e.kind, code(e.name), text(e.note), "duplicate" if e.key in dupes else "") for e in items]
-        body += table(["Type", "Name", "Note", "Flags"], rows)
-    return page("Brewfile (macOS)", "Brewfile", body)
+    for fragment, items in grouped(entries, lambda e: e.fragment).items():
+        gate = FRAGMENT_GATES.get(fragment, "")
+        body += f"## {fragment}.Brewfile — {gate}\n\n" if gate else f"## {fragment}\n\n"
+        for section, rows in grouped(items, lambda e: e.section).items():
+            body += f"### {text(section)}\n\n"
+            body += table(["Type", "Name", "Note", "Flags"],
+                          [(e.kind, code(e.name), text(e.note), "duplicate" if e.key in dupes else "") for e in rows])
+    return page("Brewfile (macOS)", ".chezmoitemplates/brew/*.Brewfile", body)
 
 
 def render_linux(common: list[str], guarded: list[p.GuardedInstall], distro_extras: dict[str, str]) -> str:

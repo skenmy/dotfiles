@@ -39,6 +39,15 @@ tap "fluxcd/tap"
         self.assertFalse(entries[0].is_auto_synced)
         self.assertTrue(entries[4].is_auto_synced)
 
+    def test_fragment_label_is_carried_and_defaults_empty(self):
+        self.assertEqual(p.parse_brewfile(self.SAMPLE)[0].fragment, "")
+        self.assertEqual(p.parse_brewfile(self.SAMPLE, "gui")[0].fragment, "gui")
+
+    def test_duplicates_are_found_across_fragments(self):
+        entries = [*p.parse_brewfile('brew "zsh"\n', "common"), *p.parse_brewfile('brew "zsh"\n', "personal")]
+        dupes = p.find_duplicates(entries)
+        self.assertEqual([e.fragment for e in dupes['brew "zsh"']], ["common", "personal"])
+
 
 class BashTests(unittest.TestCase):
     SCRIPT = """COMMON_PKGS=(git curl zsh)

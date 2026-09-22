@@ -26,15 +26,19 @@ notify anything.
 
 ### dotfiles-brew-sync
 
+0. If an earlier run appended but could not commit, retry that commit first.
 1. `brew bundle dump --force --no-vscode --no-restart` to a temp file.
-2. Extract `brew|cask|tap|mas` lines from both dump and source Brewfile, `sort -u`.
+2. Normalise every line in the dump and in the **union** of `.chezmoitemplates/brew/*.Brewfile` to
+   `kind "name"` (comments, options and whitespace stripped), `sort -u`.
 3. Drop lines matching any regex in `~/.config/dotfiles/brew-sync-ignore`.
-4. Anything in the dump but not in the source is appended under `# auto-synced from <host> on <date>`.
-5. `git pull --rebase --autostash`, commit **unsigned** (`-c commit.gpgsign=false`) directly to `main`, push.
+4. Anything in the dump but in no fragment is appended to `<target>.Brewfile` under
+   `# auto-synced from <host> on <date>`; `<target>` comes from `~/.config/dotfiles/brew-sync-target`
+   (templated: `common` when `work`, else `personal`).
+5. `git pull --rebase --autostash`, **signed** commit directly to `main`, push. If signing fails the
+   change stays staged and is retried tomorrow; nothing is ever committed unsigned.
 
-Append-only by design: uninstalling locally never removes a line. Because step 2 compares whole
-lines, any source line with a trailing comment never matches the dump and is re-appended, which is
-how the six duplicates got in ([G-04](../gaps.md#g-04)).
+Append-only by design: uninstalling locally never removes a line. Comparing names rather than whole
+lines is what stopped the duplicate re-appends recorded in [G-04](../gaps.md#g-04).
 
 ## chezmoi run scripts
 
@@ -47,7 +51,7 @@ which the scripts exploit by embedding `{{ include "<file>" | sha256sum }}` of t
 | `run_once_install-packages-linux.sh.tmpl` | Linux | script changes | distro packages, upstream installers, antidote, TPM |
 | `run_once_install-packages-windows.ps1.tmpl` | Windows | script changes | winget packages, PSReadLine |
 | `run_once_after_macos-defaults.sh.tmpl` | macOS, not headless | script changes | 42 `defaults write`, restarts Dock/Finder/SystemUIServer |
-| `run_onchange_after_brew-bundle.sh.tmpl` | macOS | `Brewfile` | `brew bundle` (`--no-upgrade` if headless) |
+| `run_onchange_after_brew-bundle.sh.tmpl` | macOS | `Brewfile.tmpl` + all three fragments | `brew bundle` (`--no-upgrade` if headless) |
 | `run_onchange_after_install-update-timer.sh.tmpl` | macOS + Linux | plist, units, worker | reload launchd agent / enable systemd timer |
 | `run_onchange_after_install-brew-sync.sh.tmpl` | macOS, not headless | plist, worker | reload launchd agent |
 | `run_onchange_after_install-restic-units.sh.tmpl` | macOS not headless; Linux | plist, units, worker | reload / enable |

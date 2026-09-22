@@ -1,9 +1,13 @@
 {{- if eq .chezmoi.os "darwin" -}}
 #!/usr/bin/env bash
-# Brewfile hash: {{ include "Brewfile" | sha256sum }}
+# Fragment hashes — re-run whenever any Brewfile source changes:
+#   template: {{ include "Brewfile.tmpl" | sha256sum }}
+#   common:   {{ include ".chezmoitemplates/brew/common.Brewfile" | sha256sum }}
+#   gui:      {{ include ".chezmoitemplates/brew/gui.Brewfile" | sha256sum }}
+#   personal: {{ include ".chezmoitemplates/brew/personal.Brewfile" | sha256sum }}
 #
-# Re-runs `brew bundle` whenever Brewfile content changes — so adding
-# `brew "foo"` and pushing is enough to get foo installed on every box
+# Re-runs `brew bundle` whenever any fragment changes — so adding
+# `brew "foo"` to a fragment and pushing is enough to get foo installed on every box
 # on the next apply (chezmoi-update timer or manual `chezmoi apply`).
 set -uo pipefail
 

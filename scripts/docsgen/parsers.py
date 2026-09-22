@@ -26,6 +26,7 @@ class BrewEntry:
     note: str
     section: str
     line: int
+    fragment: str = ""
 
     @property
     def key(self) -> str:
@@ -36,8 +37,11 @@ class BrewEntry:
         return bool(AUTO_SYNCED.match(self.section))
 
 
-def parse_brewfile(text: str) -> list[BrewEntry]:
-    """Return every package line with its nearest preceding comment as section."""
+def parse_brewfile(text: str, fragment: str = "") -> list[BrewEntry]:
+    """Return every package line with its nearest preceding comment as section.
+
+    `fragment` labels which Brewfile fragment the text came from.
+    """
     entries: list[BrewEntry] = []
     section = "Unsectioned"
     for number, raw in enumerate(text.splitlines(), start=1):
@@ -51,7 +55,7 @@ def parse_brewfile(text: str) -> list[BrewEntry]:
         match = BREW_LINE.match(line)
         if match:
             kind, name, note = match.groups()
-            entries.append(BrewEntry(kind, name, (note or "").strip(), section, number))
+            entries.append(BrewEntry(kind, name, (note or "").strip(), section, number, fragment))
     return entries
 
 
