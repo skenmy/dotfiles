@@ -8,15 +8,16 @@ this section list every entry; this page explains how they are wired.
 ## macOS: Homebrew
 
 - `Brewfile.tmpl` renders `~/Brewfile` from three fragments in `.chezmoitemplates/brew/`:
-  `common.Brewfile` (every Mac), `gui.Brewfile` (`headless = false`), `personal.Brewfile` (`work = false`).
+  `common.Brewfile` (every Mac), `gui.Brewfile` (`headless = false`), `personal.Brewfile` (`work = false`),
+  `work.Brewfile` (`work = true`).
   `brew bundle` runs on first apply (`run_once_install-packages-darwin.sh.tmpl`) and again whenever any
   fragment or the template changes (`run_onchange_after_brew-bundle.sh.tmpl` hashes all four).
 - `headless` additionally passes `--no-upgrade`.
 - `brew bundle` never uninstalls. Removing a line stops future installs; existing boxes keep the package
   until someone runs `brew bundle cleanup --file=~/Brewfile` by hand.
 - The nightly `dotfiles-brew-sync` appends anything installed locally but missing from **all** fragments
-  to the fragment named in `~/.config/dotfiles/brew-sync-target` (`common` on work Macs, `personal`
-  otherwise), then signs and pushes a commit to `main`. Append-only; see
+  to the fragment named in `~/.config/dotfiles/brew-sync-target` (`work` on work Macs, `personal`
+  otherwise; `common` is hand-edited only), then signs and pushes a commit to `main`. Append-only; see
   [Automations](../settings/automations.md#dotfiles-brew-sync).
 - Also on first run: Homebrew itself if missing, TPM clone, fzf key bindings.
 

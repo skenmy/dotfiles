@@ -34,7 +34,7 @@ it resets the clone to `origin/main` first, and once more after a failed update,
 3. Drop lines matching any regex in `~/.config/dotfiles/brew-sync-ignore`.
 4. Anything in the dump but in no fragment is appended to `<target>.Brewfile` under
    `# auto-synced from <host> on <date>`; `<target>` comes from `~/.config/dotfiles/brew-sync-target`
-   (templated: `common` when `work`, else `personal`).
+   (templated: `work` when `work`, else `personal`; `common` is never a sync target).
 5. `git pull --rebase --autostash`, **signed** commit directly to `main`, push. If signing fails the
    change stays staged and is retried tomorrow; nothing is ever committed unsigned. If the pull itself
    fails (another Mac appended to the same fragment tonight), the clone is reset to `origin/main`, the
@@ -55,7 +55,7 @@ which the scripts exploit by embedding `{{ include "<file>" | sha256sum }}` of t
 | `run_once_install-packages-windows.ps1.tmpl` | Windows | script changes | winget packages, PSReadLine |
 | `run_onchange_after_install-update-task.ps1.tmpl` | Windows | worker `.ps1` | register Scheduled Task, set `XDG_CONFIG_HOME` |
 | `run_once_after_macos-defaults.sh.tmpl` | macOS, not headless | script changes | 42 `defaults write`, restarts Dock/Finder/SystemUIServer |
-| `run_onchange_after_brew-bundle.sh.tmpl` | macOS | `Brewfile.tmpl` + all three fragments | `brew bundle` (`--no-upgrade` if headless) |
+| `run_onchange_after_brew-bundle.sh.tmpl` | macOS | `Brewfile.tmpl` + all four fragments | `brew bundle` (`--no-upgrade` if headless) |
 | `run_onchange_after_install-update-timer.sh.tmpl` | macOS + Linux | plist, units, worker | reload launchd agent / enable systemd timer |
 | `run_onchange_after_install-brew-sync.sh.tmpl` | macOS, not headless | plist, worker | reload launchd agent |
 | `run_onchange_after_install-restic-units.sh.tmpl` | macOS; Linux | plist, units, worker | reload / enable |

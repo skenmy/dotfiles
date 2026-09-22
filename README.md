@@ -125,7 +125,7 @@ You'll be prompted for the Bitwarden master password once. After that, `bootstra
 
 If you `brew install <foo>` on one Mac, you don't want to remember to PR it into the Brewfile. A nightly script handles it:
 
-- **`~/.local/bin/dotfiles-brew-sync`** — runs `brew bundle dump`, diffs (by `kind "name"`) against the union of the fragments in `.chezmoitemplates/brew/`, appends any newly-installed packages to this machine's target fragment (`~/.config/dotfiles/brew-sync-target`: `common` on work Macs, `personal` otherwise) under a dated `# auto-synced from <host>` comment, then makes a **signed** commit and pushes.
+- **`~/.local/bin/dotfiles-brew-sync`** — runs `brew bundle dump`, diffs (by `kind "name"`) against the union of the fragments in `.chezmoitemplates/brew/`, appends any newly-installed packages to this machine's target fragment (`~/.config/dotfiles/brew-sync-target`: `work` on work Macs, `personal` otherwise; `common` is hand-edited) under a dated `# auto-synced from <host>` comment, then makes a **signed** commit and pushes.
 - Launchd schedule: 02:00 local, before the 03:17 chezmoi-update — so other Macs pick up the change the same morning.
 - **Append-only by design.** Local uninstalls do *not* remove from Brewfile (removal is intentional and should go via a PR).
 - Per-machine exceptions: `~/.config/dotfiles/brew-sync-ignore` — one extended-regex per line, matched against normalised `kind "name"` lines. Add `^cask "firefox"$` to keep Firefox on this Mac only.
@@ -294,7 +294,7 @@ Logs land in `~/.local/state/restic/last.log`. Run the worker ad-hoc any time to
 
 ### Brewfile (macOS)
 
-`~/Brewfile` is rendered by `Brewfile.tmpl` from `.chezmoitemplates/brew/common.Brewfile` (every Mac), `gui.Brewfile` (`headless=false`) and `personal.Brewfile` (`work=false`). Edit the fragments, never `~/Brewfile`. Full, always-current inventory: <https://skenmy.github.io/dotfiles/generated/brewfile/>.
+`~/Brewfile` is rendered by `Brewfile.tmpl` from `.chezmoitemplates/brew/common.Brewfile` (every Mac), `gui.Brewfile` (`headless=false`), `personal.Brewfile` (`work=false`) and `work.Brewfile` (`work=true`). Edit the fragments, never `~/Brewfile`. Full, always-current inventory: <https://skenmy.github.io/dotfiles/generated/brewfile/>.
 
 CLI: `zsh starship antidote mise direnv fzf zoxide eza bat ripgrep fd jq yq btop tree wget watch tmux neovim lazygit git-delta gh atuin gnupg go node uv ffmpeg tesseract streamlink watchman`.
 

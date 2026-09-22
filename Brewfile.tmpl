@@ -4,6 +4,7 @@
 #   common.Brewfile   → every Mac
 #   gui.Brewfile      → headless = false
 #   personal.Brewfile → work = false
+#   work.Brewfile     → work = true
 {{ template "brew/common.Brewfile" . }}
 {{- if not .headless }}
 
@@ -12,4 +13,8 @@
 {{- if not .work }}
 
 {{ template "brew/personal.Brewfile" . }}
+{{- end }}
+{{- if .work }}
+
+{{ template "brew/work.Brewfile" . }}
 {{- end }}

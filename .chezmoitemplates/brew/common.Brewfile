@@ -2,7 +2,8 @@
 # Rendered into ~/Brewfile via Brewfile.tmpl together with gui.Brewfile
 # (not headless) and personal.Brewfile (not work). Edit these fragments,
 # never ~/Brewfile. dotfiles-brew-sync appends to the fragment named in
-# ~/.config/dotfiles/brew-sync-target (default: this one).
+# ~/.config/dotfiles/brew-sync-target: `work` on work Macs, `personal` elsewhere.
+# Add to this file by hand only — it reaches every Mac.
 
 tap "fluxcd/tap"
 tap "messense/macos-cross-toolchains"
