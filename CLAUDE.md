@@ -9,7 +9,8 @@ This is the **chezmoi source repo** for Paul's personal dotfiles. Files here ren
 - `Library/LaunchAgents/` (macOS only) — launchd plists. Currently the daily `chezmoi-update`, nightly `restic-backup`, 02:00 `dotfiles-brew-sync` jobs.
 - `dot_config/systemd/user/` (Linux only) — systemd user units for the same three jobs.
 - `Brewfile` — every brew/cask installed by `brew bundle`. Re-applied automatically when its hash changes (see `run_onchange_after_brew-bundle.sh.tmpl`).
-- `scripts/` — `.chezmoiignore`'d. Shell-out scripts not deployed to `$HOME`: `bootstrap.sh` (curl-pipe-bash entry point), `seed-bitwarden.sh` (one-time secret push).
+- `scripts/` — `.chezmoiignore`'d. Shell-out scripts not deployed to `$HOME`: `bootstrap.sh` (curl-pipe-bash entry point), `seed-bitwarden.sh` (one-time secret push), `docsgen/` (Python, stdlib-only: generates the inventory pages for the audit site; tests in `docsgen/tests/`).
+- `docs/` + `mkdocs.yml` — `.chezmoiignore`'d. Hand-written audit pages (profiles, settings, gap register, how-to) for the GitHub Pages site at <https://skenmy.github.io/dotfiles/>. `docs/generated/` is gitignored and produced at build time. `.github/workflows/docs.yml` tests, generates, builds and deploys on every push to `main`. When you change a template, script or `.chezmoiignore`, update the matching hand-written page and its *Reviewed against* SHA in the same PR.
 - `dot_local/private_bin/executable_*` — scripts that end up at `~/.local/bin/` with 0700 perms. Workers for the timers.
 - `gpg-public-key.asc` — armored public key, imported on apply via `run_onchange_after_import-gpg-key.sh.tmpl`.
 - `.chezmoi.toml.tmpl` — first-run prompts (`name`, `email`, `signingKey`, `headless`, `work`).

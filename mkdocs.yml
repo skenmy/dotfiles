@@ -1,0 +1,73 @@
+site_name: skenmy/dotfiles audit
+site_description: What these dotfiles install and change, per profile, and how to change them.
+site_url: https://skenmy.github.io/dotfiles/
+repo_url: https://github.com/skenmy/dotfiles
+repo_name: skenmy/dotfiles
+edit_uri: edit/main/docs/
+strict: true
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: [docs]
+      check_paths: true
+
+nav:
+  - Home: index.md
+  - Profiles: profiles.md
+  - Packages:
+      - Overview: packages/index.md
+      - Brewfile (macOS): generated/brewfile.md
+      - Linux: generated/linux.md
+      - Windows: generated/windows.md
+      - Neovim: generated/nvim.md
+      - VS Code extensions: generated/vscode-extensions.md
+      - zsh plugins: generated/zsh-plugins.md
+      - tmux plugins: generated/tmux-plugins.md
+  - Settings:
+      - Shell & prompt: settings/shell.md
+      - Git & SSH: settings/git-ssh.md
+      - Editors & terminal: settings/editors-terminal.md
+      - macOS defaults: generated/macos-defaults.md
+      - Automations & timers: settings/automations.md
+      - Backup & secrets: settings/backup-secrets.md
+      - git aliases: generated/git-aliases.md
+      - zsh aliases: generated/zsh-aliases.md
+      - Shell tips: generated/tips.md
+  - Gap register: gaps.md
+  - How to change things: howto.md
+  - File inventory: generated/files.md
+  - Summary: generated/summary.md
