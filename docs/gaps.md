@@ -17,12 +17,12 @@ Severity: **High** = something is broken or lands on machines that should not ge
 | [G-06](#g-06) | Medium | Linux (Arch, Alpine) | Debian package names break pacman/apk; dead headless branch | **fixed** — per-manager names; headless branch now gates Zed + font |
 | [G-07](#g-07) | Medium | all | `authorized_keys` needs GitHub at every apply; personal keys land on work boxes | **fixed** — unmanaged on work; 168h API cache |
 | [G-08](#g-08) | Medium | work | Work profile expects `id_ed25519_skenmy` / `_eit`; bootstrap writes `id_ed25519` | **fixed** — bootstrap names the key by the work flag |
-| [G-09](#g-09) | Medium | macOS headless | No restic backup on headless Macs — intentional? | decision needed |
-| [G-10](#g-10) | Medium | docs | README drift (GPG vs SSH signing, themes, age, agents) | open |
+| [G-09](#g-09) | Medium | macOS headless | No restic backup on headless Macs — intentional? | **fixed** — decided: headless Macs are backed up |
+| [G-10](#g-10) | Medium | docs | README drift (GPG vs SSH signing, themes, age, agents) | **fixed** |
 | [G-11](#g-11) | Medium | macOS desktop | VS Code settings hard-code `/Users/paul` | **fixed** — VS Code management removed; Zed replaces it |
 | [G-12](#g-12) | Medium | repo | No CI or pre-commit on the repo itself | partly fixed by the docs workflow |
-| [G-13](#g-13) | Low | all | Neovim `<C-j>`/`<C-k>` mapped twice | open |
-| [G-14](#g-14) | Low | all | pre-commit defaults pin 2024 revisions | open |
+| [G-13](#g-13) | Low | all | Neovim `<C-j>`/`<C-k>` mapped twice | **fixed** — quickfix on `]q`/`[q` |
+| [G-14](#g-14) | Low | all | pre-commit defaults pin 2024 revisions | **fixed** — v6.0.0 / v8.30.1 / v2.4.3 |
 | [G-15](#g-15) | Low | Windows | Four bash `run_onchange` scripts have no OS guard | **fixed** — ignored on Windows by target name |
 | [G-16](#g-16) | Low | all | Identity emails hard-coded in four places | **fixed** — `.chezmoidata/identity.toml` |
 | [G-17](#g-17) | Low | Linux desktop | tmux copy assumes `pbcopy`/`xclip`; no Wayland; no Nerd Font installed | **fixed** — `wl-copy` fallback; JetBrainsMono Nerd Font installed on desktops |
@@ -159,16 +159,15 @@ the EIT key or documents how to.
 **Evidence.** `com.skenmy.restic-backup.plist.tmpl` and `install-restic-units` are gated
 `and (eq .chezmoi.os "darwin") (not .headless)`; the Linux units are not headless-gated.
 
-**Decision needed.** If a headless Mac (mini, build box) holds nothing worth keeping, record that here
-and on the Profiles page. If not, drop the `(not .headless)` from both files.
+**Fixed (decision: back them up).** The `(not .headless)` gate was dropped from the restic plist and from
+`install-restic-units`, so every Mac with a `~/.config/restic/env` gets the 04:32 job. brew-sync stays
+desktop-only.
 
 ## G-10 — README drift {#g-10}
 
-`README.md` still says: GPG-signed commits and `signingKey → user.signingkey` (now SSH signing, the
-value is a flag); starship "Gruvbox-dark" (Catppuccin Mocha); Ghostty "TokyoNight" (Catppuccin Mocha);
-chezmoi-encrypted files "via the existing `~/.age-key`" (no `[age]` section exists); "macOS uses
-Keychain + 1Password SSH agent" (now 1Password on work, Bitwarden on personal). The
-`.chezmoi.toml.tmpl` prompt text still says "GPG signing key". `CLAUDE.md` is current.
+**Fixed.** README now describes SSH signing and the `signingKey` switch, Catppuccin Mocha for starship and
+Ghostty, the per-profile SSH agents, and notes that age encryption is not configured. The `signingKey`
+prompt text explains what the value does.
 
 ## G-11 — VS Code settings hard-code a username {#g-11}
 
@@ -185,13 +184,12 @@ smoke renders with `--promptBool headless=true,work=true`; a `.pre-commit-config
 
 ## G-13 — Neovim `<C-j>` / `<C-k>` double-mapped {#g-13}
 
-`keymaps.lua` maps them to window navigation, then to quickfix next/prev. The later mapping wins, so
-moving between splits vertically does not work. Move quickfix to `]q` / `[q`.
+**Fixed.** Quickfix next/prev moved to `]q` / `[q`; `<C-j>`/`<C-k>` navigate windows again.
 
 ## G-14 — pre-commit defaults pinned to 2024 {#g-14}
 
-`pre-commit-hooks v5.0.0`, `gitleaks v8.18.4`, `codespell v2.3.0`. Run `pre-commit autoupdate` on the
-defaults file periodically.
+**Fixed.** Bumped to `pre-commit-hooks v6.0.0`, `gitleaks v8.30.1`, `codespell v2.4.3` (2026-09-22); the
+file header now carries the `pre-commit autoupdate -c …` one-liner for next time.
 
 ## G-15 — Unguarded bash scripts on Windows {#g-15}
 

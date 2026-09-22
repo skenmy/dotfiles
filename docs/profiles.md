@@ -26,7 +26,7 @@ Change any of them later with `chezmoi edit-config` then `chezmoi apply`.
 | **Zed** (cask / install.sh / winget) + `settings.json` | ✓ | – | ✓ | – | ✓ (`AppData\Roaming\Zed`) |
 | **macOS defaults** | ✓ (42 keys) | – | – | – | – |
 | **Nightly `chezmoi update`** | launchd 03:17 | launchd 03:17 | systemd user timer 03:17 (+30 min jitter) | same, needs `loginctl enable-linger` | Scheduled Task 03:17 (when logged on) |
-| **Nightly restic backup** | launchd 04:32 | **none** | systemd 04:32 (+jitter) | systemd 04:32 | **none** |
+| **Nightly restic backup** | launchd 04:32 | launchd 04:32 | systemd 04:32 (+jitter) | systemd 04:32 | – |
 | **Nightly brew-sync** | launchd 02:00 → `common` if work, else `personal` | – | – | – | – |
 | **Tailscale** | `tailscale-app` cask, personal only | same (personal) | `install.sh` unless `work` | same | – |
 | **Bitwarden bootstrap** | `bootstrap.sh` | `bootstrap.sh` | `bootstrap.sh` | `bootstrap.sh` | `bootstrap.ps1` (no restic) |
@@ -63,7 +63,7 @@ Applies on every OS unless stated.
 
 | OS | Effect |
 |---|---|
-| macOS | Skips Ghostty config, Zed config, macOS defaults, brew-sync timer, **restic timer**, and the whole `gui.Brewfile` fragment (all casks and fonts); `brew bundle` runs with `--no-upgrade`. |
+| macOS | Skips Ghostty config, Zed config, macOS defaults, brew-sync timer, and the whole `gui.Brewfile` fragment (all casks and fonts); `brew bundle` runs with `--no-upgrade`. restic runs as on desktops. |
 | Linux | Skips the Zed install and `~/.config/zed`. Packages are otherwise identical. |
 | Windows | Nothing (Zed config lives under `AppData`, which is not headless-gated; a headless Windows box is not a supported profile). |
 

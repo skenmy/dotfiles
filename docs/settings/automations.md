@@ -8,7 +8,7 @@
 |---|---|---|---|---|---|---|
 | Dotfiles update | 03:17 daily | launchd `com.skenmy.chezmoi-update` (all Macs) | systemd user timer `chezmoi-update.timer`, +30 min jitter, `Persistent=true` | Scheduled Task `skenmy-chezmoi-update`, `StartWhenAvailable`, logged-on only | `~/.local/bin/chezmoi-update-and-notify` (`.ps1` on Windows) | `~/.local/state/chezmoi-update/last.log` |
 | Brewfile sync | 02:00 daily | launchd `com.skenmy.dotfiles-brew-sync` (desktop only) | – | – | `~/.local/bin/dotfiles-brew-sync` | `~/.local/state/dotfiles-brew-sync/last.log` |
-| restic backup | 04:32 daily | launchd `com.skenmy.restic-backup` (desktop only) | systemd `restic-backup.timer`, +30 min jitter, `Nice=10`, idle I/O | – | `~/.local/bin/restic-backup` | `~/.local/state/restic/last.log` |
+| restic backup | 04:32 daily | launchd `com.skenmy.restic-backup` (all Macs) | systemd `restic-backup.timer`, +30 min jitter, `Nice=10`, idle I/O | – | `~/.local/bin/restic-backup` | `~/.local/state/restic/last.log` |
 
 launchd agents run with a fixed `PATH` of `~/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin`
 and fire on wake if the Mac was asleep. systemd user timers need `loginctl enable-linger $USER` on
@@ -55,7 +55,7 @@ which the scripts exploit by embedding `{{ include "<file>" | sha256sum }}` of t
 | `run_onchange_after_brew-bundle.sh.tmpl` | macOS | `Brewfile.tmpl` + all three fragments | `brew bundle` (`--no-upgrade` if headless) |
 | `run_onchange_after_install-update-timer.sh.tmpl` | macOS + Linux | plist, units, worker | reload launchd agent / enable systemd timer |
 | `run_onchange_after_install-brew-sync.sh.tmpl` | macOS, not headless | plist, worker | reload launchd agent |
-| `run_onchange_after_install-restic-units.sh.tmpl` | macOS not headless; Linux | plist, units, worker | reload / enable |
+| `run_onchange_after_install-restic-units.sh.tmpl` | macOS; Linux | plist, units, worker | reload / enable |
 | `run_onchange_after_install-gh-extensions.sh.tmpl` | all (bash) | hard-coded list literal | `gh extension install dlvhdr/gh-dash` once authed |
 | `run_onchange_after_import-gpg-key.sh.tmpl` | all (bash) | `gpg-public-key.asc` | `gpg --import` + ultimate ownertrust of `signingKey` |
 | `run_onchange_after_build-allowed-signers.sh.tmpl` | all (bash) | `email`, `work` | rewrite `~/.ssh/allowed_signers` |

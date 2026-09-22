@@ -5,8 +5,8 @@
 
 ## restic
 
-Runs nightly on macOS desktops and every Linux box (see [Automations](automations.md)); never on
-headless Macs or Windows. Skips silently, logging one line, if `~/.config/restic/env` is missing.
+Runs nightly on every Mac (headless included, since 2026-09-22) and every Linux box (see
+[Automations](automations.md)); never on Windows. Skips silently, logging one line, if `~/.config/restic/env` is missing.
 
 | Aspect | Value |
 |---|---|

@@ -21,7 +21,8 @@ no `hlsearch`, splits open right/below, persistent undo, no swap or backup, `upd
 | `<Esc>` | clear search highlight |
 | `<leader>w` / `<leader>q` | save / quit |
 | `<C-h>` `<C-l>` | window left / right |
-| `<C-j>` `<C-k>` | defined twice: window down/up **and** quickfix next/prev. The quickfix mapping wins ([G-13](../gaps.md#g-13)) |
+| `<C-j>` `<C-k>` | window down / up |
+| `]q` `[q` | quickfix next / previous |
 | `J` / `K` (visual) | move selection down / up |
 | `<C-d>` `<C-u>` `n` `N` | keep cursor centred |
 | `<leader>p` (visual) | paste without yanking |

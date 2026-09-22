@@ -32,6 +32,6 @@ map("n", "<leader>Y", '"+Y')
 map("n", "<S-h>", "<cmd>bprevious<CR>")
 map("n", "<S-l>", "<cmd>bnext<CR>")
 
--- Quick fix list
-map("n", "<C-k>", "<cmd>cnext<CR>zz")
-map("n", "<C-j>", "<cmd>cprev<CR>zz")
+-- Quick fix list (]q / [q — <C-j>/<C-k> are window navigation above)
+map("n", "]q", "<cmd>cnext<CR>zz", { desc = "Next quickfix" })
+map("n", "[q", "<cmd>cprev<CR>zz", { desc = "Previous quickfix" })
