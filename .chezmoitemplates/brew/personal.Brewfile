@@ -13,3 +13,8 @@ cask "telegram"
 cask "battle-net"
 cask "tailscale-app"        # work boxes use the employer-managed Tailscale
 cask "openclaw"
+
+# auto-synced from Mac on 2026-09-25
+brew "whisper.cpp"
+cask "boswell"
+tap "skenmy/boswell"
