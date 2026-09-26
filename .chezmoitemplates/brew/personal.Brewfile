@@ -18,3 +18,6 @@ cask "openclaw"
 brew "whisper.cpp"
 cask "boswell"
 tap "skenmy/boswell"
+
+# auto-synced from Mac on 2026-09-26
+cask "caffeine"
