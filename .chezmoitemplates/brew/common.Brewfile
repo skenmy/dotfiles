@@ -67,5 +67,4 @@ brew "k9s"            # TUI dashboard for kubectl — `k9s`
 brew "helm"
 brew "kustomize"
 brew "kubeseal"
-brew "fluxcd/tap/flux"
 brew "terraform"
