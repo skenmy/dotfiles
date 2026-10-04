@@ -3,8 +3,6 @@
 
 cask "zed"                  # code editor everywhere (config: ~/.config/zed)
 cask "ghostty"
-cask "iterm2"
-cask "raycast"
 cask "docker-desktop"       # check licence terms on employer machines
 cask "claude-code@latest"
 cask "zulu@17"
