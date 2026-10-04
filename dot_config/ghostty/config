@@ -47,7 +47,7 @@ scrollback-limit = 10000000
 # tmux/vim Alt-bindings, and for sending real ESC in some apps.
 macos-option-as-alt = true
 # Show tabs across the titlebar (vs the default "native" macOS bar).
-macos-titlebar-style = tabs
+# macos-titlebar-style = tabs
 
 # ── Keybindings ───────────────────────────────────────────────────
 # All other Cmd bindings (new tab/window, splits, paste, etc.) are Ghostty
