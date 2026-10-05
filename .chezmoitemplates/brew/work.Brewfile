@@ -9,6 +9,9 @@ brew "ollama"
 cask "spotify"
 cask "telegram"
 
+# Vault CLI — tap declared in common.Brewfile
+brew "hashicorp/tap/vault"
+
 # auto-synced from EIT-G52N0TQKM3 on 2026-09-23
 brew "ansible"
 brew "argocd"
