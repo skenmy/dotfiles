@@ -6,3 +6,7 @@
 #   ^brew "experimental-tool"$
 #
 # Lines starting with # are comments and ignored.
+
+# Duplicates: the codex cask ships the CLI; terraform (common.Brewfile) owns bin/terraform
+^brew "codex"$
+^brew "tfenv"$
