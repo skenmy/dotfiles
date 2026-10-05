@@ -10,3 +10,6 @@
 # Duplicates: the codex cask ships the CLI; terraform (common.Brewfile) owns bin/terraform
 ^brew "codex"$
 ^brew "tfenv"$
+
+# Self-updating, root-owned app: brew can't upgrade it unattended (needs sudo)
+^cask "chatgpt"$
