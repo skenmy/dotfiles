@@ -83,3 +83,44 @@ restic snapshots — list every backup snapshot in your repo. `--host=$(hostname
 restic stats latest — size of the latest snapshot.
 restic restore latest --target /tmp/restore — pull files back from the latest backup.
 ~/.local/bin/restic-backup — run a backup right now (else 04:32 nightly).
+
+# ── vps: tailnet tools (*.ts.skenmy.com) ──────────────────────────
+home.ts.skenmy.com — Glance, the VPS front door: a link to every service plus live numbers. Start here if you forget what's running.
+*.ts.skenmy.com hosts only route over Tailscale. If one won't load, run `tailscale status` before blaming the service.
+links.ts.skenmy.com — linkding bookmarks. Settings → Integrations has a bookmarklet to save any page in one click.
+rss.ts.skenmy.com — Miniflux RSS reader. j/k to move, v opens the original article, ? lists every shortcut.
+watch.ts.skenmy.com — changedetection.io: watch any web page for changes. Alerts land on the ntfy `watch` topic.
+tools.ts.skenmy.com — IT-Tools: JWT decode, base64, UUIDs, cron parser, regex tester, all offline. Not tools.skenmy.com (that's the Twitch login gate).
+code.ts.skenmy.com — VS Code in the browser. Clone repos into its workspace; /opt/skenmy-vps is deliberately not mounted.
+git.ts.skenmy.com — Forgejo: hourly pull-mirrors of every skenmy repo. The origin to clone from when GitHub is down. SSH is on port 2222.
+grafana.ts.skenmy.com — metrics dashboards + alert rules. Provisioned from skenmy-vps/observability/grafana, so change them by PR.
+dozzle.ts.skenmy.com — live logs for every container in the browser. The "what is it doing right now" view.
+logs.ts.skenmy.com — VictoriaLogs: search past container logs with LogsQL, e.g. `_time:1h error`. The "what happened at 03:00" view.
+healthchecks.ts.skenmy.com — Healthchecks dashboard (dead-man's switch for cron jobs). Shows which scheduled job went quiet.
+
+# ── vps: public apps ──────────────────────────────────────────────
+z.skenmy.com — Zipline file + screenshot host. Share links are public; uploads need your API token. 95MB max (Cloudflare caps at 100).
+gist.skenmy.com — Opengist pastebin. Every gist is a git repo, so `git clone` works on any gist URL.
+skenmy.com/admin — URL-shortener admin. Every slug becomes skenmy.com/<slug>.
+status.skenmy.com — Gatus: public uptime for every host on the VPS. Embedded as the Status app in skenOS.
+analytics.skenmy.com — Umami: privacy-friendly analytics for skenmy.com and friends.
+fares.skenmy.com — fares-tracker: GWR fare-drop calendar.
+tools.skenmy.com — Twitch login gate for the lowerthird / esaquiz / blockbuster / schedule control panels. Grants are managed here.
+lowerthird + esaquiz: /control.html is behind the Twitch gate; source.html stays open so OBS browser sources can load it.
+skenmy.com/notes — the Obsidian vault, published by notes-builder. Old notes.skenmy.com links redirect there.
+daemon.skenmy.com — DAEMON, the bullet-hell game from skenOS, standalone and linkable.
+
+# ── vps: alerts ───────────────────────────────────────────────────
+ntfy.skenmy.com topics: alerts (Gatus + Grafana, forwarded to Telegram), images (Diun image updates), watch (changedetection).
+ntfy publish: curl -H "Authorization: Bearer $TOKEN" -d "deploy done" https://ntfy.skenmy.com/<topic>. Anonymous access is denied, so a token is required.
+Dead-man's switch for any job: `long-job && curl -fsS -m 10 --retry 3 https://hc.skenmy.com/ping/<uuid>`. Append /start before or /fail on error.
+
+# ── vps: operating the box ────────────────────────────────────────
+ssh deploy@vps-uk — VPS shell (tailnet + key only). root@vps-uk for host-level work. Never hand-edit /opt/skenmy-vps; deploys overwrite it.
+./compose logs --tail=50 -f <svc> — on the VPS, always use ./compose, never bare `docker compose` (it misses services.d + env.d).
+./bin/lint-stack — run in skenmy-vps before pushing. Catches missing DNS records, healthchecks, Gatus checks and backup labels.
+New VPS service: services.d/<name>.yml + conf.d/<NN>-<host>.caddy + DNS record + Gatus check, then open a PR. Merging to main deploys it.
+./bin/backup --check — preview what tonight's restic → B2 run will send. ./bin/restore --list / --fetch to pull a snapshot without touching live data.
+sudo ./bin/reconcile-host --check — report VPS host drift (swap, patching, firewall) without changing anything.
+sudo ./bin/firewall-trial --disable — the escape hatch if the VPS nftables rules ever lock SSH out.
+Mac Mini CI: `runs-on: [self-hosted, linux, container]` puts a private repo's job on the desk Mac instead of spending GitHub minutes.
