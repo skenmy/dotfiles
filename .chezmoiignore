@@ -19,6 +19,8 @@ install-update-task.ps1
 .local/bin/chezmoi-update-and-notify.ps1
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
+{{/* Claude Code status line is a bash + jq script */}}
+.claude
 .zshrc
 .zshenv
 .zprofile

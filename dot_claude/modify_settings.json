@@ -1,0 +1,13 @@
+#!/bin/sh
+# chezmoi modify_ script for ~/.claude/settings.json. Claude Code owns the rest of
+# this file (permissions, plugins, drafts — per-machine and not for a public repo),
+# so we only set statusLine and pass everything else through untouched.
+# chezmoi writes whatever this prints, so on any failure echo the input back.
+in=$(cat)
+[ -n "$in" ] || in='{}'
+if command -v jq >/dev/null 2>&1 &&
+   out=$(printf '%s' "$in" | jq --indent 2 '.statusLine = {"type": "command", "command": "bash ~/.claude/statusline.sh"}'); then
+  printf '%s\n' "$out"
+else
+  printf '%s' "$in"
+fi

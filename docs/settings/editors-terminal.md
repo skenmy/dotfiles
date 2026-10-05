@@ -78,3 +78,15 @@ on Windows. Skipped on `headless` (Zed needs a GPU). Installed by the `gui.Brewf
 
 There is no separate extension installer script any more; add a line to `auto_install_extensions` and
 push. `EDITOR`/`VISUAL` stay `nvim` for terminal use; `git config core.editor` too.
+
+## Claude Code status line (macOS + Linux)
+
+`dot_claude/statusline.sh` → `~/.claude/statusline.sh`: Catppuccin Mocha powerline segments, in order
+model + effort (mauve), context % (blue), 5-hour session % (teal), directory (peach) and git branch +
+status (yellow). Context and session turn red at 80%. Directory and git logic follow
+`~/.config/starship.toml`. Needs `bash`, `jq` and `git`. No network calls.
+
+`dot_claude/modify_settings.json` sets only `statusLine` in `~/.claude/settings.json`. Claude Code owns
+the rest of that file (permissions, plugins, drafts), which stays per-machine and out of this public
+repo. If `jq` is missing or the file isn't valid JSON, the script passes it through unchanged.
+Windows ignores `.claude` entirely.
