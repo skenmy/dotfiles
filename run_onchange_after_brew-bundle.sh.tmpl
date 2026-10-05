@@ -14,6 +14,10 @@ set -uo pipefail
 
 command -v brew >/dev/null 2>&1 || { echo "brew not on PATH; skipping bundle"; exit 0; }
 
+# Homebrew refuses formulae from third-party taps until trusted
+# (`brew trust`, stored per machine). terraform comes from hashicorp/tap.
+brew trust --tap hashicorp/tap >/dev/null 2>&1 || true
+
 echo "==> brew bundle (Brewfile changed)"
 brew bundle --file="$HOME/Brewfile" {{ if default false .headless }}--no-upgrade{{ end }} || \
     echo "!! brew bundle reported errors; check 'brew bundle check --verbose' for details"

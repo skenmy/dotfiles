@@ -1,6 +1,6 @@
 # Automations & timers
 
-*Reviewed against `ada9e1c`, 2026-09-22.*
+*Reviewed against `4b5fe4c`, 2026-10-05.*
 
 ## Scheduled jobs
 
@@ -55,7 +55,7 @@ which the scripts exploit by embedding `{{ include "<file>" | sha256sum }}` of t
 | `run_once_install-packages-windows.ps1.tmpl` | Windows | script changes | winget packages, PSReadLine |
 | `run_onchange_after_install-update-task.ps1.tmpl` | Windows | worker `.ps1` | register Scheduled Task, set `XDG_CONFIG_HOME` |
 | `run_once_after_macos-defaults.sh.tmpl` | macOS, not headless | script changes | 42 `defaults write`, restarts Dock/Finder/SystemUIServer |
-| `run_onchange_after_brew-bundle.sh.tmpl` | macOS | `Brewfile.tmpl` + all four fragments | `brew bundle` (`--no-upgrade` if headless) |
+| `run_onchange_after_brew-bundle.sh.tmpl` | macOS | `Brewfile.tmpl` + all four fragments | `brew trust --tap hashicorp/tap`, then `brew bundle` (`--no-upgrade` if headless) |
 | `run_onchange_after_install-update-timer.sh.tmpl` | macOS + Linux | plist, units, worker | reload launchd agent / enable systemd timer |
 | `run_onchange_after_install-brew-sync.sh.tmpl` | macOS, not headless | plist, worker | reload launchd agent |
 | `run_onchange_after_install-restic-units.sh.tmpl` | macOS; Linux | plist, units, worker | reload / enable |

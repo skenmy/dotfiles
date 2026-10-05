@@ -7,6 +7,7 @@
 
 tap "fluxcd/tap"
 tap "messense/macos-cross-toolchains"
+tap "hashicorp/tap"     # terraform left homebrew-core after the BSL change
 
 # Shell + prompt
 brew "zsh"
@@ -67,4 +68,4 @@ brew "k9s"            # TUI dashboard for kubectl — `k9s`
 brew "helm"
 brew "kustomize"
 brew "kubeseal"
-brew "terraform"
+brew "hashicorp/tap/terraform"

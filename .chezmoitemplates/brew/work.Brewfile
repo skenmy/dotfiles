@@ -76,6 +76,5 @@ cask "tableplus"
 mas "WireGuard", id: 1451685025
 tap "buo/cask-upgrade"
 tap "felixkratz/formulae"
-tap "hashicorp/tap"
 tap "minio/stable"
 tap "turbot/tap"
