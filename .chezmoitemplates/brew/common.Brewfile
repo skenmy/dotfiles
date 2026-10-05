@@ -5,7 +5,6 @@
 # ~/.config/dotfiles/brew-sync-target: `work` on work Macs, `personal` elsewhere.
 # Add to this file by hand only — it reaches every Mac.
 
-tap "fluxcd/tap"
 tap "messense/macos-cross-toolchains"
 tap "hashicorp/tap"     # terraform left homebrew-core after the BSL change
 
