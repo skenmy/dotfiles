@@ -169,5 +169,14 @@ if [[ -o interactive ]] && [[ -z "${DOTFILES_NO_TIP:-}" ]] && [[ -r "$HOME/.conf
     unset _tip
 fi
 
+# ---- Claude Code: hand tokens to MCP plugins only, not every shell ----
+# terraform plugin reads TFE_TOKEN (from `terraform login`); github plugin reads
+# GITHUB_PERSONAL_ACCESS_TOKEN (from the active `gh` account). Empty if absent.
+claude() {
+    TFE_TOKEN="$(jq -r '.credentials["app.terraform.io"].token // empty' ~/.terraform.d/credentials.tfrc.json 2>/dev/null)" \
+    GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token 2>/dev/null)" \
+    command claude "$@"
+}
+
 # ---- Local overrides (gitignored) ----
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"

@@ -68,6 +68,11 @@ the comment explains the mise migration.
 **Random tip.** One non-comment line from `~/.config/dotfiles/tips` on every interactive start, printed with
 `printf` so `%` and backticks are safe. Silence per machine with `DOTFILES_NO_TIP=1` in `~/.zshrc.local`.
 
+**Claude Code wrapper.** A `claude()` function sets `TFE_TOKEN` (read from `terraform login`'s
+`~/.terraform.d/credentials.tfrc.json`) and `GITHUB_PERSONAL_ACCESS_TOKEN` (`gh auth token`) only for the
+`claude` process, so its terraform and github MCP plugins can authenticate without exporting tokens to every
+shell. Either is empty if its source is missing.
+
 **Local overrides.** `~/.zshrc.local` is sourced last and is not managed.
 
 ## starship (`~/.config/starship.toml`)
