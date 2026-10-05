@@ -76,6 +76,5 @@ cask "sf-symbols"
 cask "skim"
 cask "tableplus"
 mas "WireGuard", id: 1451685025
-tap "buo/cask-upgrade"
 tap "felixkratz/formulae"
 tap "minio/stable"
