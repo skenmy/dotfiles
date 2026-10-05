@@ -86,7 +86,7 @@ model + effort (mauve), context % (blue), 5-hour session % (teal), directory (pe
 status (yellow). Context and session turn red at 80%. Directory and git logic follow
 `~/.config/starship.toml`. Needs `bash`, `jq` and `git`. No network calls.
 
-`dot_claude/modify_settings.json` sets only `statusLine` in `~/.claude/settings.json`. Claude Code owns
+`dot_claude/modify_private_settings.json` sets only `statusLine` in `~/.claude/settings.json`. Claude Code owns
 the rest of that file (permissions, plugins, drafts), which stays per-machine and out of this public
 repo. If `jq` is missing or the file isn't valid JSON, the script passes it through unchanged.
 Windows ignores `.claude` entirely.
