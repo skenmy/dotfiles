@@ -20,3 +20,7 @@ tap "skenmy/boswell"
 
 # auto-synced from Mac on 2026-09-26
 cask "caffeine"
+
+# auto-synced from Mac on 2026-10-06
+brew "libtiff"
+tap "fluxcd/tap"
