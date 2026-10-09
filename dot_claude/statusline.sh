@@ -3,9 +3,9 @@
 # preceded by model, context used % and 5h session %. No network; git calls use --no-optional-locks.
 cfg="$HOME/.config/starship.toml"
 input=$(cat)
-IFS=$'\t' read -r cwd model effort used sess < <(printf '%s' "$input" | jq -r '[(.workspace.current_dir // .cwd // ""), (.model.display_name // "-"), (.effort.level // "-"), (.context_window.used_percentage // "-"), (.rate_limits.five_hour.used_percentage // "-")] | @tsv')
+IFS=$'\t' read -r cwd model effort used sess reset < <(printf '%s' "$input" | jq -r '[(.workspace.current_dir // .cwd // ""), (.model.display_name // "-"), (.effort.level // "-"), (.context_window.used_percentage // "-"), (.rate_limits.five_hour.used_percentage // "-"), (.rate_limits.five_hour.resets_at // "-")] | @tsv')
 [ -z "$cwd" ] && cwd=$PWD
-[ "$model" = "-" ] && model=""; [ "$effort" = "-" ] && effort=""; [ "$used" = "-" ] && used=""; [ "$sess" = "-" ] && sess=""
+[ "$model" = "-" ] && model=""; [ "$effort" = "-" ] && effort=""; [ "$used" = "-" ] && used=""; [ "$sess" = "-" ] && sess=""; [ "$reset" = "-" ] && reset=""
 
 # Catppuccin mocha truecolor (R;G;B triples)
 MAUVE="203;166;247"; BLUE="137;180;250"; TEAL="148;226;213"
@@ -58,7 +58,17 @@ done <<< "$subs"
 # ---- model, context %, session % (5h limit; omitted if absent) ----
 [ -n "$model" ] && seg "$MAUVE" " ${model}${effort:+ · $effort} "
 [ -n "$used" ] && seg "$(pct_col "$BLUE" "$used")" " ctx $(printf '%.0f' "$used")% "
-[ -n "$sess" ] && seg "$(pct_col "$TEAL" "$sess")" " 5h $(printf '%.0f' "$sess")% "
+if [ -n "$sess" ]; then
+  rtxt=""
+  if [ -n "$reset" ]; then
+    reset=${reset%.*}
+    left=$(( reset - $(date +%s) ))
+    if [ "$left" -gt 0 ]; then
+      rtxt=" · $((left/3600))h$(printf '%02d' $(( (left%3600)/60 )))m ($(TZ=Europe/London date -r "$reset" +%H:%M))"
+    fi
+  fi
+  seg "$(pct_col "$TEAL" "$sess")" " 5h $(printf '%.0f' "$sess")%${rtxt} "
+fi
 
 seg "$PEACH" " ${path} "
 
