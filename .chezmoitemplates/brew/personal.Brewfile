@@ -24,3 +24,6 @@ cask "caffeine"
 # auto-synced from Mac on 2026-10-06
 brew "libtiff"
 tap "fluxcd/tap"
+
+# auto-synced from Mac on 2026-10-14
+brew "mingw-w64"
