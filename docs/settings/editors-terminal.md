@@ -1,6 +1,6 @@
 # Editors & terminal
 
-*Reviewed against `1e30dcf` + `feat/zed-everywhere`, 2026-09-22.* Files: `dot_config/nvim/**`, `dot_config/ghostty/config`,
+*Reviewed against `06254c8`, 2026-10-17.* Files: `dot_config/nvim/**`, `dot_config/ghostty/config`, `dot_claude/**`,
 `.chezmoitemplates/zed-settings.json` (rendered to `~/.config/zed/settings.json` and, on Windows, `~/AppData/Roaming/Zed/settings.json`).
 
 ## Neovim
@@ -86,7 +86,15 @@ model + effort (mauve), context % (blue), 5-hour session % (teal), directory (pe
 status (yellow). Context and session turn red at 80%. Directory and git logic follow
 `~/.config/starship.toml`. Needs `bash`, `jq` and `git`. No network calls.
 
-`dot_claude/modify_private_settings.json` sets only `statusLine` in `~/.claude/settings.json`. Claude Code owns
+`dot_claude/modify_private_settings.json` sets only `statusLine` and `env.CLAUDE_CODE_SUBAGENT_MODEL=sonnet` in `~/.claude/settings.json`. Claude Code owns
 the rest of that file (permissions, plugins, drafts), which stays per-machine and out of this public
 repo. If `jq` is missing or the file isn't valid JSON, the script passes it through unchanged.
 Windows ignores `.claude` entirely.
+
+### Subagent routing
+
+`dot_claude/CLAUDE.md` → `~/.claude/CLAUDE.md`: a task → agent/model/effort table that the main (Opus)
+session follows on every Agent call: Haiku for lookups, Sonnet for implementation, Opus for planning and
+review, Fable only when stuck. `dot_claude/agents/Explore.md` overrides the built-in Explore agent so
+code search runs on Haiku at medium effort instead of the main model. `CLAUDE_CODE_SUBAGENT_MODEL=sonnet`
+catches any agent that names no model (general-purpose, workflow agents).
