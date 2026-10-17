@@ -27,3 +27,6 @@ tap "fluxcd/tap"
 
 # auto-synced from Mac on 2026-10-14
 brew "mingw-w64"
+
+# auto-synced from Mac on 2026-10-17
+cask "mgba-app"
