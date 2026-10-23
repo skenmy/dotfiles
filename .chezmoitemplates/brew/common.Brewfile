@@ -68,3 +68,12 @@ brew "helm"
 brew "kustomize"
 brew "kubeseal"
 brew "hashicorp/tap/terraform"
+
+# Containers — Colima runs the Docker engine in a VM (replaces Docker Desktop).
+# compose/buildx need "cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"]
+# in ~/.docker/config.json, and "credsStore": "osxkeychain".
+brew "colima"         # `brew services start colima` to run at login
+brew "docker"         # CLI only
+brew "docker-compose"
+brew "docker-buildx"
+brew "docker-credential-helper"

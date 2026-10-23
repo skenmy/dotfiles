@@ -300,7 +300,9 @@ CLI: `zsh starship antidote mise direnv fzf zoxide eza bat ripgrep fd jq yq btop
 
 Kubernetes / infra: `kubernetes-cli helm kustomize kubeseal flux terraform`.
 
-Casks (gui): `ghostty iterm2 raycast docker-desktop claude-code@latest zulu@17 logi-options+ wireshark-app`. Personal only: `spotify telegram battle-net tailscale-app openclaw` plus `streamlink whisper-cpp yt-dlp ollama`. Headless boxes get no casks.
+Containers: `colima docker docker-compose docker-buildx docker-credential-helper` (Colima replaces Docker Desktop).
+
+Casks (gui): `ghostty iterm2 raycast claude-code@latest zulu@17 logi-options+ wireshark-app`. Personal only: `spotify telegram battle-net tailscale-app openclaw` plus `streamlink whisper-cpp yt-dlp ollama`. Headless boxes get no casks.
 
 Fonts: `font-jetbrains-mono-nerd-font font-symbols-only-nerd-font`.
 

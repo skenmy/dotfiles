@@ -5,6 +5,11 @@ export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 
+# Colima: pin to ~/.colima. With XDG_CONFIG_HOME set it would use
+# ~/.config/colima, but the brew service runs under launchd without it and
+# only looks in ~/.colima, so the two would see different VMs.
+export COLIMA_HOME="$HOME/.colima"
+
 # Editor defaults
 export EDITOR="nvim"
 export VISUAL="nvim"

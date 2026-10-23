@@ -3,7 +3,6 @@
 
 cask "zed"                  # code editor everywhere (config: ~/.config/zed)
 cask "ghostty"
-cask "docker-desktop"       # check licence terms on employer machines
 cask "claude-code@latest"
 cask "codex"                # Codex CLI, used by the Claude Code codex plugin
 cask "zulu@17"
